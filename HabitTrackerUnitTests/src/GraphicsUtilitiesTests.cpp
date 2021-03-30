@@ -42,7 +42,7 @@ TEST(GraphicsUtilitiesTests, split_string_overflow_buffer)
 	std::string words[max_words];
 
 
-	LONGS_EQUAL(4, GraphicsUtilities::SplitString(test, words, max_words, font_width, screen_width));
+	LONGS_EQUAL(max_words, GraphicsUtilities::SplitString(test, words, max_words, font_width, screen_width));
 }
 
 TEST(GraphicsUtilitiesTests, split_string_long_word)

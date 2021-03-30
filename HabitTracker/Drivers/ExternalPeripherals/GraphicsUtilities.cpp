@@ -21,20 +21,17 @@ size_t GraphicsUtilities::SplitString(std::string input, std::string output[], s
 			{
 				if (current_word_index < output_size)
 				{
-					output[current_word_index] = current_word;
+					output[current_word_index++] = current_word;
 					current_word = "";
 				}
-				current_word_index++;
 
 			}
 
 			// Add the newline as its own "word"
 			if (current_word_index < output_size)
 			{
-				output[current_word_index] = "\n";
+				output[current_word_index++] = "\n";
 			}
-
-			current_word_index++;
 
 		}else if (*iter == ' ')
 		{
@@ -43,10 +40,9 @@ size_t GraphicsUtilities::SplitString(std::string input, std::string output[], s
 			{
 				if (current_word_index < output_size)
 				{
-					output[current_word_index] = current_word;
+					output[current_word_index++] = current_word;
 					current_word = "";
 				}
-				current_word_index++;
 
 			}else
 			{
@@ -63,11 +59,9 @@ size_t GraphicsUtilities::SplitString(std::string input, std::string output[], s
 			{// If yes, cut off word and continue the word onto the next string
 				if (current_word_index < output_size)
 				{
-					output[current_word_index] = current_word;
+					output[current_word_index++] = current_word;
 					current_word = *iter;
 				}
-				current_word_index++;
-
 			}
 		}
 	}
@@ -77,10 +71,9 @@ size_t GraphicsUtilities::SplitString(std::string input, std::string output[], s
 	{
 		if (current_word_index < output_size)
 		{
-			output[current_word_index] = current_word;
+			output[current_word_index++] = current_word;
 			current_word = "";
 		}
-		current_word_index++;
 
 	}
 	return current_word_index;
