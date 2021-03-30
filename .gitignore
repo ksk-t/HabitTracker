@@ -1,0 +1,6 @@
+HabitTracker/Debug/
+HabitTrackerUnitTests/Debug/
+RemoteSystemsTempFiles/
+test/
+.metadata/
+*.swp
