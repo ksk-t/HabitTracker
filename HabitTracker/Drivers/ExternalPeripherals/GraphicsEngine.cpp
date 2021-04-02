@@ -128,3 +128,9 @@ void GraphicsEngine::SetFont(BasicFont* font)
 {
 	m_font = font;
 }
+
+uint32_t GraphicsEngine::GetDisplayHeight()
+{
+	return m_display->GetHeight();
+}
+

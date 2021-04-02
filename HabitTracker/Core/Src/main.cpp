@@ -23,15 +23,23 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Color.h"
+#include "SSD1306.h"
+#include "Display.h"
+#include "GraphicsEngine.h"
+#include "BasicFonts.h"
+#include "Logger.h"
+#include "LoggerTask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,10 +56,23 @@ UART_HandleTypeDef huart3;
 osThreadId_t defaultTaskHandle;
 osThreadAttr_t defaultTask_attributes;
 /* USER CODE BEGIN PV */
+
+// Logger Queue Configuration
+static const uint32_t g_logger_queueSize = 3;
+static const uint32_t g_logger_queueItemSize = Logger::BufferItemSize;
+osMessageQueueId_t g_logger_queueHandle;
+uint8_t g_logger_queueBuffer[g_logger_queueItemSize * g_logger_queueSize];
+osStaticMessageQDef_t g_logger_queueControlBlock;
+osMessageQueueAttr_t g_logger_queue_attributes;
+
+// Threads
+osThreadId_t logger_taskHandle;;
+osThreadAttr_t loggerTaskAttributes;
 osThreadId_t ld1TaskHandle;
 osThreadAttr_t ld1TaskAttributes;
 osThreadId_t ld2TaskHandle;
 osThreadAttr_t ld2TaskAttributes;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,15 +85,12 @@ void StartDefaultTask(void *argument);
 /* USER CODE BEGIN PFP */
 void LD1ToggleThread(void *argument);
 void LD2ToggleThread(void *argument);
+void LoggerTaskThread(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#include "Color.h"
-#include "SSD1306.h"
-#include "Display.h"
-#include "GraphicsEngine.h"
-#include "BasicFonts.h"
+
 /* USER CODE END 0 */
 
 /**
@@ -85,14 +103,6 @@ int main(void)
 	defaultTask_attributes.name = "defaultTask";
 	defaultTask_attributes.priority = (osPriority_t) osPriorityNormal;
 	defaultTask_attributes.stack_size = 128 * 4;
-
-	ld1TaskAttributes.name = "ld1Task";
-	ld1TaskAttributes.priority = (osPriority_t) osPriorityNormal;
-	ld1TaskAttributes.stack_size = 4000;
-
-	ld2TaskAttributes.name = "defaultTask";
-	ld2TaskAttributes.priority = (osPriority_t) osPriorityNormal;
-	ld2TaskAttributes.stack_size = 1000 * 4;
 
   /* USER CODE END 1 */
 
@@ -117,16 +127,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-	SSD1306 ssd1306{&hi2c1};
-	GraphicsEngine gEngine{&ssd1306};
-	gEngine.Initialize();
 
-	Point_t point{100, 10};
-	gEngine.Fill(BasicColors::White());
-	gEngine.SetFont(&Font_11x18);
-	gEngine.DrawBox(point, 40, 20, BasicColors::Black(), BasicColors::White());
-	gEngine.DrawStringWrap(BasicColors::Black(), "this is a test of the wrap function");
-	gEngine.Update();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -145,16 +146,37 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  g_logger_queue_attributes.name = "g_logger_queue";
+  g_logger_queue_attributes.cb_mem = &g_logger_queueControlBlock;
+  g_logger_queue_attributes.cb_size = sizeof(g_logger_queueControlBlock);
+  g_logger_queue_attributes.mq_mem = &g_logger_queueBuffer;
+  g_logger_queue_attributes.mq_size = sizeof(g_logger_queueBuffer);
+  g_logger_queueHandle = osMessageQueueNew (g_logger_queueSize, g_logger_queueItemSize, &g_logger_queue_attributes);
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-//  ld1TaskHandle = osThreadNew(LD1ToggleThread, NULL, &ld1TaskAttributes);
-//  ld2TaskHandle = osThreadNew(LD2ToggleThread, NULL, &ld2TaskAttributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  loggerTaskAttributes.name = "LoggerTask";
+  loggerTaskAttributes.priority = (osPriority_t) osPriorityNormal;
+  loggerTaskAttributes.stack_size = 1000 * 4;
+  logger_taskHandle = osThreadNew(LoggerTaskThread, NULL, &loggerTaskAttributes);
+
+  // Test Threads
+  ld1TaskAttributes.name = "ld1Task";
+  ld1TaskAttributes.priority = (osPriority_t) osPriorityNormal;
+  ld1TaskAttributes.stack_size = 8000;
+  ld1TaskHandle = osThreadNew(LD1ToggleThread, NULL, &ld1TaskAttributes);
+//
+//  ld2TaskAttributes.name = "ld2task";
+//  ld2TaskAttributes.priority = (osPriority_t) osPriorityNormal;
+//  ld2TaskAttributes.stack_size = 1000 * 4;
+//  ld2TaskHandle = osThreadNew(LD2ToggleThread, NULL, &ld2TaskAttributes);
+
+
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -379,12 +401,21 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void LD1ToggleThread(void *argument)
 {
+	SSD1306 ssd1306{&hi2c1};
+	GraphicsEngine gEngine{&ssd1306};
+	gEngine.Initialize();
 
-
+	Point_t point{100, 10};
+	gEngine.Fill(BasicColors::White());
+	gEngine.SetFont(&Font_7x10);
+	gEngine.DrawBox(point, 40, 20, BasicColors::Black(), BasicColors::White());
+	gEngine.DrawStringWrap(BasicColors::Black(), "this is a test of the test capabilites");
+	gEngine.Update();
 
 	for (;;)
 	{
-
+		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+		osDelay(1000);
 	}
 }
 
@@ -393,8 +424,14 @@ void LD2ToggleThread(void *argument)
 	for (;;)
 	{
 		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-		osDelay(100);
+		osDelay(1000);
 	}
+}
+
+void LoggerTaskThread(void *argument)
+{
+	LoggerTask logger_task{};
+	logger_task.Run();
 }
 /* USER CODE END 4 */
 
