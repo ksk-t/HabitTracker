@@ -6,12 +6,36 @@
  */
 
 #include "Logger.h"
+#include "cmsis_os.h"
 
 extern osMessageQueueId_t g_logger_queueHandle;
 
-void Logger::Write(osThreadId_t sending_thread, std::string str)
+#define LOGGING_DEBUG_ENABLE
+#define LOGGING_ERROR_ENABLE
+
+std::ostringstream& Logger::Get()
 {
-	std::string final_str = "[" + std::string(osThreadGetName(sending_thread)) + "]: " + str + "\n";
-	osMessageQueuePut(g_logger_queueHandle, final_str.c_str(), 0U, 0U);
+	os << "[" << std::string(osThreadGetName(osThreadGetId())) << "]["
+			<< m_module << "]: ";
+	return os;
 }
 
+Logger::~Logger()
+{
+	switch (m_level)
+	{
+	case LoggingLevel::Debug:
+#ifndef LOGGING_DEBUG_ENABLE
+		return;
+#endif
+		break;
+	case LoggingLevel::Error:
+#ifndef LOGGING_ERROR_ENABLE
+		return;
+#endif
+		break;
+	}
+
+	std::string message = os.str() + "\n";
+	osMessageQueuePut(g_logger_queueHandle, message.c_str(), 0U, 0U);
+}

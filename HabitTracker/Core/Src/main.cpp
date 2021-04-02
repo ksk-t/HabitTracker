@@ -176,7 +176,6 @@ int main(void)
 //  ld2TaskAttributes.stack_size = 1000 * 4;
 //  ld2TaskHandle = osThreadNew(LD2ToggleThread, NULL, &ld2TaskAttributes);
 
-
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -236,7 +235,7 @@ void SystemClock_Config(void)
 
 /**
   * @brief I2C1 Initialization Function
-  * @param None
+  * @param None}
   * @retval None
   */
 static void MX_I2C1_Init(void)
@@ -406,10 +405,10 @@ void LD1ToggleThread(void *argument)
 	gEngine.Initialize();
 
 	Point_t point{100, 10};
-	gEngine.Fill(BasicColors::White());
+	gEngine.Fill(BasicColors::Black());
 	gEngine.SetFont(&Font_7x10);
 	gEngine.DrawBox(point, 40, 20, BasicColors::Black(), BasicColors::White());
-	gEngine.DrawStringWrap(BasicColors::Black(), "this is a test of the test capabilites");
+	gEngine.DrawStringWrap(BasicColors::White(), "this is a test of the test capabilites");
 	gEngine.Update();
 
 	for (;;)
