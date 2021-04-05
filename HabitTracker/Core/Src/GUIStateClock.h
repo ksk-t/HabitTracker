@@ -13,7 +13,7 @@
 class GUIStateClock : public GUIStateBase
 {
 public:
-	GUIStateClock(GraphicsEngine* gfx_engine, GUIController* controller) : GUIStateBase(gfx_engine, controller) {};
+	GUIStateClock(GraphicsEngine* gfx_engine, GUIControllerTask* controller) : GUIStateBase(gfx_engine, controller) {};
 	void UIDraw() override;
 	void OnLoaded() override;
 private:

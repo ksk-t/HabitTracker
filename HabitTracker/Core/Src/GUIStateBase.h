@@ -10,12 +10,12 @@
 
 #include "GraphicsEngine.h"
 
-class GUIController; // Forward declaration
+class GUIControllerTask; // Forward declaration
 
 class GUIStateBase
 {
 public:
-	GUIStateBase(GraphicsEngine* gfx_engine, GUIController* controller) : m_gfx_engine(gfx_engine), m_controller(controller) {};
+	GUIStateBase(GraphicsEngine* gfx_engine, GUIControllerTask* controller) : m_gfx_engine(gfx_engine), m_controller(controller) {};
 	virtual void UILeft(){};
 	virtual void UIRight(){};
 	virtual void UISelect(){};
@@ -24,7 +24,7 @@ public:
 	virtual ~GUIStateBase() {};
 protected:
 	GraphicsEngine* m_gfx_engine;
-	GUIController* m_controller;
+	GUIControllerTask* m_controller;
 };
 
 

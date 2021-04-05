@@ -40,15 +40,8 @@
 
 //
 #include "SSD1306.h"
+#include "Logger.h"
 #include <string>
-
-//SSD1306::SSD1306(I2C_HandleTypeDef i2c_handler) :
-//	_is_enabled(false),
-//	_i2c_handler(NULL)
-//{
-//	_draw_string_setting.SetFont(&Font_7x10);
-//	_draw_string_setting.SetColor(Color::GetColor(BasicColor::White));
-//}
 
 // Module name used for logging
 static const std::string MODULE_NAME = "SSD1306: ";
@@ -86,12 +79,16 @@ void SSD1306::WriteCommandByte(uint8_t byte)
 	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(m_i2c_handler, I2C_ADDR, 0x00, 1, &byte, 1, HAL_MAX_DELAY);
 	if (HAL_OK != status)
 	{
-
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "I2C write fail" << status;
 	}
 }
 void SSD1306::WriteCommandBytes(uint8_t* buffer, size_t buffer_size)
 {
-	HAL_I2C_Mem_Write(m_i2c_handler, I2C_ADDR, 0x40, 1, buffer, buffer_size, HAL_MAX_DELAY);
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(m_i2c_handler, I2C_ADDR, 0x40, 1, buffer, buffer_size, HAL_MAX_DELAY);
+	if (HAL_OK != status)
+	{
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "I2C write fail" << status;
+	}
 }
 
 void SSD1306::WriteCommand(CMD cmd)

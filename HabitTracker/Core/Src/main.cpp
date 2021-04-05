@@ -30,9 +30,13 @@
 #include "BasicFonts.h"
 #include "Logger.h"
 #include "LoggerTask.h"
+#include "GUIControllerTask.h"
+#include "GUIStateClock.h"
+#include "RealTimeClock.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PTD */
@@ -50,12 +54,15 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+RTC_HandleTypeDef hrtc;
+
 UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
+/* Definitions for g_logger_queue */
+/* USER CODE BEGIN PV */
 osThreadId_t defaultTaskHandle;
 osThreadAttr_t defaultTask_attributes;
-/* USER CODE BEGIN PV */
 
 // Logger Queue Configuration
 static const uint32_t g_logger_queueSize = 3;
@@ -68,10 +75,15 @@ osMessageQueueAttr_t g_logger_queue_attributes;
 // Threads
 osThreadId_t logger_taskHandle;;
 osThreadAttr_t loggerTaskAttributes;
+osThreadId_t gui_controllerHandle;;
+osThreadAttr_t gui_controllerAttributes;
 osThreadId_t ld1TaskHandle;
 osThreadAttr_t ld1TaskAttributes;
 osThreadId_t ld2TaskHandle;
 osThreadAttr_t ld2TaskAttributes;
+
+// Shared resources
+RealTimeClock rtc{&hrtc};
 
 /* USER CODE END PV */
 
@@ -80,12 +92,14 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_RTC_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 void LD1ToggleThread(void *argument);
 void LD2ToggleThread(void *argument);
 void LoggerTaskThread(void *argument);
+void GUIControllerTaskThread(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -126,7 +140,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
+  // Start shared resources
+  rtc.Initialize();
 
   /* USER CODE END 2 */
 
@@ -137,13 +154,17 @@ int main(void)
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES*/
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of g_logger_queue */
+  g_logger_queueHandle = osMessageQueueNew (3, 256, &g_logger_queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   g_logger_queue_attributes.name = "g_logger_queue";
@@ -165,6 +186,11 @@ int main(void)
   loggerTaskAttributes.stack_size = 1000 * 4;
   logger_taskHandle = osThreadNew(LoggerTaskThread, NULL, &loggerTaskAttributes);
 
+  gui_controllerAttributes.name = "GUIControllerTask";
+  gui_controllerAttributes.priority = (osPriority_t) osPriorityNormal;
+  gui_controllerAttributes.stack_size = 8000;
+  gui_controllerHandle = osThreadNew(GUIControllerTaskThread, NULL, &gui_controllerAttributes);
+
   // Test Threads
   ld1TaskAttributes.name = "ld1Task";
   ld1TaskAttributes.priority = (osPriority_t) osPriorityNormal;
@@ -177,6 +203,10 @@ int main(void)
 //  ld2TaskHandle = osThreadNew(LD2ToggleThread, NULL, &ld2TaskAttributes);
 
   /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
   osKernelStart();
@@ -201,13 +231,15 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 13;
@@ -231,11 +263,17 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
   * @brief I2C1 Initialization Function
-  * @param None}
+  * @param None
   * @retval None
   */
 static void MX_I2C1_Init(void)
@@ -264,6 +302,40 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_12;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 249;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
@@ -400,22 +472,41 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void LD1ToggleThread(void *argument)
 {
-	SSD1306 ssd1306{&hi2c1};
-	GraphicsEngine gEngine{&ssd1306};
-	gEngine.Initialize();
 
-	Point_t point{100, 10};
-	gEngine.Fill(BasicColors::Black());
-	gEngine.SetFont(&Font_7x10);
-	gEngine.DrawBox(point, 40, 20, BasicColors::Black(), BasicColors::White());
-	gEngine.DrawStringWrap(BasicColors::White(), "this is a test of the test capabilites");
-	gEngine.Update();
 
 	for (;;)
 	{
 		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 		osDelay(1000);
 	}
+}
+
+void GUIControllerTaskThread(void *argument)
+{
+	SSD1306 ssd1306{&hi2c1};
+	GraphicsEngine gEngine{&ssd1306};
+	gEngine.Initialize();
+
+	GUIControllerTask controller{};
+
+	// State
+//	GUIStateClock state_clock{&gEngine, &controller};
+//	controller.AddState(&state_clock, GUIState::Clock);
+//	controller.SetState(GUIState::Clock);
+
+	// Testing Only
+	for(;;)
+	{
+		Time_t current_time = rtc.GetTime();
+		gEngine.Fill(BasicColors::Black());
+		gEngine.DrawStringWrap(BasicColors::White(), current_time.ToString(true));
+		gEngine.Update();
+
+		osDelay(200);
+	}
+
+	controller.Run();
+
 }
 
 void LD2ToggleThread(void *argument)
@@ -452,7 +543,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE END 5 */
 }
 
-/**
+ /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM1 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment

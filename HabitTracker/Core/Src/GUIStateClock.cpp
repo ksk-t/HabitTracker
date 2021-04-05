@@ -7,6 +7,9 @@
 
 
 #include "GUIStateClock.h"
+#include "Logger.h"
+
+static const std::string MODULE_NAME = "GUIStateClock";
 
 void GUIStateClock::OnLoaded()
 {
@@ -20,11 +23,17 @@ void GUIStateClock::UIDraw()
 
 void GUIStateClock::DrawTime()
 {
+	if (m_gfx_engine == nullptr)
+	{
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "GFX Engine null";
+		return;
+	}
+
 	BasicFont* font = &Font_16x26;
 	m_gfx_engine->SetFont(font);
 	Point_t point{0, m_gfx_engine->GetDisplayHeight() / 2 - font->FontHeight / 2};
 
-	m_gfx_engine->Fill(BasicColors::White());
+	m_gfx_engine->Fill(BasicColors::Black());
 	m_gfx_engine->DrawString(point, BasicColors::White(),  "testval");
 	m_gfx_engine->Update();
 }

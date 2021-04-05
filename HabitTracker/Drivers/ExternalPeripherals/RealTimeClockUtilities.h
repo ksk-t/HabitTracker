@@ -1,0 +1,15 @@
+/*
+ * RealTimeClockUtilities.h
+ *
+ *  Created on: Apr 4, 2021
+ *      Author: keisu
+ */
+
+#ifndef EXTERNALPERIPHERALS_REALTIMECLOCKUTILITIES_H_
+#define EXTERNALPERIPHERALS_REALTIMECLOCKUTILITIES_H_
+
+
+
+
+
+#endif /* EXTERNALPERIPHERALS_REALTIMECLOCKUTILITIES_H_ */

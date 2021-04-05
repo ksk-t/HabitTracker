@@ -14,7 +14,6 @@
 
 enum class LoggingLevel
 {
-	None,
 	Error,
 	Debug
 };
