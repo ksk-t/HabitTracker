@@ -40,65 +40,65 @@
 
 //
 #include "SSD1306.h"
-#include "Logger.h"
 #include <string>
 
 // Module name used for logging
 static const std::string MODULE_NAME = "SSD1306: ";
 
-void SSD1306::Initialize()
+#define CHECK_HAL_STATUS(status_to_check)({ if (status_to_check != HAL_OK) return Status_t::ERROR; else return Status_t::OK; })
+
+Status_t SSD1306::Initialize()
 {
-	this->WriteCommand(CMD::SET_MEM_ADDR_MODE);
-	this->WriteCommand(CMD::PAGE_START_ADDR);
-	this->WriteCommand(CMD::COM_SCAN_DIR_63_TO_0);
-	this->WriteCommand(CMD::LOW_COLUMN_ADDR_0);
-	this->WriteCommand(CMD::HIGH_COLUMN_ADDR_0);
-	this->WriteCommand(CMD::START_LINE_ADDR_0);
-	this->SetContrast(0xFF);
-	this->WriteCommand(CMD::INVERSE_OFF);
-	this->WriteCommand(CMD::MULTIPLEX_RATIO_1_64);
-	this->WriteCommand(CMD::UNKNOWN);
-	this->WriteCommand(CMD::OUTPUT_FOLLOWS_RAM);
-	this->WriteCommand(CMD::SET_DISPLAY_OFFSET);
-	this->WriteCommandByte(0x00);
-	this->WriteCommand(CMD::SET_DISPLAY_CLOCK_RATIO);
-	this->WriteCommandByte(0xF0);
-	this->WriteCommand(CMD::SET_PRECHARGE_PERIOD);
-	this->WriteCommandByte(0x22);
-	this->WriteCommand(CMD::SET_COM_PIN_HW_CONFIG);
-	this->WriteCommandByte(0x12);
-	this->WriteCommand(CMD::SET_VCOMH);
-	this->WriteCommandByte(0x20);
-	this->WriteCommand(CMD::SET_DCDC_ENABLE);
-	this->WriteCommandByte(0x14);
-	this->SetDisplayEnable(true);
+	Status_t status = Status_t::OK;
+	status |= this->WriteCommand(CMD::SET_MEM_ADDR_MODE);
+	status |= this->WriteCommand(CMD::PAGE_START_ADDR);
+	status |= this->WriteCommand(CMD::COM_SCAN_DIR_63_TO_0);
+	status |= this->WriteCommand(CMD::LOW_COLUMN_ADDR_0);
+	status |= this->WriteCommand(CMD::HIGH_COLUMN_ADDR_0);
+	status |= this->WriteCommand(CMD::START_LINE_ADDR_0);
+	status |= this->SetContrast(0xFF);
+	status |= this->WriteCommand(CMD::INVERSE_OFF);
+	status |= this->WriteCommand(CMD::MULTIPLEX_RATIO_1_64);
+	status |= this->WriteCommand(CMD::UNKNOWN);
+	status |= this->WriteCommand(CMD::OUTPUT_FOLLOWS_RAM);
+	status |= this->WriteCommand(CMD::SET_DISPLAY_OFFSET);
+	status |= this->WriteCommandByte(0x00);
+	status |= this->WriteCommand(CMD::SET_DISPLAY_CLOCK_RATIO);
+	status |= this->WriteCommandByte(0xF0);
+	status |= this->WriteCommand(CMD::SET_PRECHARGE_PERIOD);
+	status |= this->WriteCommandByte(0x22);
+	status |= this->WriteCommand(CMD::SET_COM_PIN_HW_CONFIG);
+	status |= this->WriteCommandByte(0x12);
+	status |= this->WriteCommand(CMD::SET_VCOMH);
+	status |= this->WriteCommandByte(0x20);
+	status |= this->WriteCommand(CMD::SET_DCDC_ENABLE);
+	status |= this->WriteCommandByte(0x14);
+	status |= this->SetDisplayEnable(true);
+
+	return status;
 }
 
-void SSD1306::WriteCommandByte(uint8_t byte)
+Status_t SSD1306::WriteCommandByte(uint8_t byte)
 {
 	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(m_i2c_handler, I2C_ADDR, 0x00, 1, &byte, 1, HAL_MAX_DELAY);
-	if (HAL_OK != status)
-	{
-		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "I2C write fail" << status;
-	}
+	CHECK_HAL_STATUS(status);
 }
-void SSD1306::WriteCommandBytes(uint8_t* buffer, size_t buffer_size)
+
+Status_t SSD1306::WriteCommandBytes(uint8_t* buffer, size_t buffer_size)
 {
 	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(m_i2c_handler, I2C_ADDR, 0x40, 1, buffer, buffer_size, HAL_MAX_DELAY);
-	if (HAL_OK != status)
-	{
-		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "I2C write fail" << status;
-	}
+	CHECK_HAL_STATUS(status);
 }
 
-void SSD1306::WriteCommand(CMD cmd)
+Status_t SSD1306::WriteCommand(CMD cmd)
 {
-	this->WriteCommandByte((uint8_t)cmd);
+	return WriteCommandByte((uint8_t)cmd);
 }
 
-void SSD1306::SetDisplayEnable(bool enable)
+Status_t SSD1306::SetDisplayEnable(bool enable)
 {
 	CMD value;
+	Status_t status = Status_t::OK;
 
     if (enable)
     {
@@ -109,33 +109,39 @@ void SSD1306::SetDisplayEnable(bool enable)
 
 	}
 
-    this->WriteCommand(value);
+    status = this->WriteCommand(value);
     m_is_enabled = enable;
+
+    return status;
 }
 
-void  SSD1306::SetContrast(const uint8_t value)
+Status_t  SSD1306::SetContrast(const uint8_t value)
 {
-	this->WriteCommand(CMD::SET_CONTRAST);
-	this->WriteCommandByte(value);
+	Status_t status = Status_t::OK;
+	status |= WriteCommand(CMD::SET_CONTRAST);
+	status |= WriteCommandByte(value);
+	return status;
 }
 
-void SSD1306::Update()
+Status_t SSD1306::Update()
 {
+	Status_t status = Status_t::OK;
     for(uint8_t i = 0; i < HEIGHT/8; i++) {
-        this->WriteCommandByte(0xB0 + i); // Set the current RAM page address.
-        this->WriteCommandByte(0x00);
-        this->WriteCommandByte(0x10);
-        this->WriteCommandBytes(&m_buffer[WIDTH*i], WIDTH);
+    	status |= this->WriteCommandByte(0xB0 + i); // Set the current RAM page address.
+    	status |= this->WriteCommandByte(0x00);
+    	status |= this->WriteCommandByte(0x10);
+    	status |= this->WriteCommandBytes(&m_buffer[WIDTH*i], WIDTH);
     }
 
+    return status;
 }
 
-void SSD1306::DrawPixel(Point_t point, Color_t color)
+Status_t SSD1306::DrawPixel(Point_t point, Color_t color)
 {
     if(point.X >= WIDTH || point.Y >= HEIGHT)
     {
         // Don't write outside the buffer
-        return;
+        return Status_t::OK;
     }
 
     if(color == BasicColors::Black())
@@ -145,5 +151,7 @@ void SSD1306::DrawPixel(Point_t point, Color_t color)
     {
     	m_buffer[point.X + (point.Y / 8) * WIDTH] |= 1 << (point.Y % 8);
     }
+
+    return Status_t::OK;
 }
 

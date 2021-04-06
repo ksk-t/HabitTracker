@@ -12,16 +12,16 @@
 
 #include "Color.h"
 #include "Point.h"
+#include "Status.h"
 
 class Display
 {
 public:
-	virtual void Initialize() {};
-	virtual void DrawPixel(Point_t point, Color_t color) {};
-	virtual void InvertPixel(Point_t point) {};
+	virtual Status_t Initialize() { return Status_t::OK; };
+	virtual Status_t DrawPixel(Point_t point, Color_t color) { return Status_t::OK; };
 	virtual uint32_t GetHeight() { return 0; };
 	virtual uint32_t GetWidth() { return 0; };
-	virtual void Update() {};
+	virtual Status_t Update() { return Status_t::OK; };
 };
 
 

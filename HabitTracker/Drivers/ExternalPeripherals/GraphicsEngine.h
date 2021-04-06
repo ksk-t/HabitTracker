@@ -25,8 +25,10 @@ public:
 	void DrawString(Point_t point, Color_t color, std::string string);
 	void DrawStringWrap(Color_t color, std::string string);
 	void DrawBox(const Point_t point, const uint32_t width, const uint32_t height, const Color_t outline_color, const Color_t fill_color);
+	void DrawLine(const Point_t point1, const Point_t point2, const Color_t color);
 	void Fill(const Color_t color);
 	uint32_t GetDisplayHeight();
+	uint32_t GetDisplayWidth();
 private:
 	Display* m_display;
 	BasicFont* m_font;

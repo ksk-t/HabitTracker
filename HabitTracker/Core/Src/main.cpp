@@ -31,8 +31,9 @@
 #include "Logger.h"
 #include "LoggerTask.h"
 #include "GUIControllerTask.h"
-#include "GUIStateClock.h"
 #include "RealTimeClock.h"
+#include "GUIStateHabits.h"
+#include "GUIStateClock.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,8 +78,8 @@ osThreadId_t logger_taskHandle;;
 osThreadAttr_t loggerTaskAttributes;
 osThreadId_t gui_controllerHandle;;
 osThreadAttr_t gui_controllerAttributes;
-osThreadId_t ld1TaskHandle;
-osThreadAttr_t ld1TaskAttributes;
+osThreadId_t statusLedTaskHandle;
+osThreadAttr_t statusLedTaskAttributes;
 osThreadId_t ld2TaskHandle;
 osThreadAttr_t ld2TaskAttributes;
 
@@ -96,7 +97,7 @@ static void MX_RTC_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
-void LD1ToggleThread(void *argument);
+void StatusLEDsTask(void *argument);
 void LD2ToggleThread(void *argument);
 void LoggerTaskThread(void *argument);
 void GUIControllerTaskThread(void *argument);
@@ -178,7 +179,6 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   loggerTaskAttributes.name = "LoggerTask";
@@ -192,10 +192,10 @@ int main(void)
   gui_controllerHandle = osThreadNew(GUIControllerTaskThread, NULL, &gui_controllerAttributes);
 
   // Test Threads
-  ld1TaskAttributes.name = "ld1Task";
-  ld1TaskAttributes.priority = (osPriority_t) osPriorityNormal;
-  ld1TaskAttributes.stack_size = 8000;
-  ld1TaskHandle = osThreadNew(LD1ToggleThread, NULL, &ld1TaskAttributes);
+  statusLedTaskAttributes.name = "StatusLEDTask";
+  statusLedTaskAttributes.priority = (osPriority_t) osPriorityNormal;
+  statusLedTaskAttributes.stack_size = 2000;
+  statusLedTaskHandle = osThreadNew(StatusLEDsTask, NULL, &statusLedTaskAttributes);
 //
 //  ld2TaskAttributes.name = "ld2task";
 //  ld2TaskAttributes.priority = (osPriority_t) osPriorityNormal;
@@ -470,13 +470,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void LD1ToggleThread(void *argument)
+void StatusLEDsTask(void *argument)
 {
-
-
 	for (;;)
 	{
-		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+		HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
 		osDelay(1000);
 	}
 }
@@ -489,21 +487,30 @@ void GUIControllerTaskThread(void *argument)
 
 	GUIControllerTask controller{};
 
-	// State
-//	GUIStateClock state_clock{&gEngine, &controller};
-//	controller.AddState(&state_clock, GUIState::Clock);
-//	controller.SetState(GUIState::Clock);
+//	 State
+	GUIStateHabits state_habits{&gEngine, &controller, &rtc};
+	controller.AddState(&state_habits, GUIState::HABITS);
+	controller.SetState(GUIState::HABITS);
 
-	// Testing Only
-	for(;;)
-	{
-		Time_t current_time = rtc.GetTime();
-		gEngine.Fill(BasicColors::Black());
-		gEngine.DrawStringWrap(BasicColors::White(), current_time.ToString(true));
-		gEngine.Update();
-
-		osDelay(200);
-	}
+////	// Testing Only
+//	for(;;)
+//	{
+//		for (int i = 0; i < 64; i++)
+//		{
+//			gEngine.Fill(BasicColors::Black());
+//			Point_t test1{0, 30};
+//			Point_t test2{100, i};
+//			Point_t string_point{0, 40};
+//			gEngine.DrawString(string_point, BasicColors::White(), std::to_string(i));
+//			gEngine.DrawLine(test1, test2, BasicColors::White());
+//			gEngine.Update();
+//		}
+////		Time_t current_time = rtc.GetTime();
+////		gEngine.Fill(BasicColors::Black());
+////		gEngine.DrawStringWrap(BasicColors::White(), current_time.ToString(true));
+//
+//		osDelay(200);
+//	}
 
 	controller.Run();
 

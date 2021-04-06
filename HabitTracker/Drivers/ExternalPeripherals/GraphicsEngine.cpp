@@ -7,6 +7,9 @@
 
 #include "GraphicsEngine.h"
 #include "GraphicsUtilities.h"
+#include "Logger.h"
+
+const static std::string MODULE_NAME = "GraphicsEngine";
 
 GraphicsEngine::GraphicsEngine(Display* display) :
 	m_display(display)
@@ -16,12 +19,18 @@ GraphicsEngine::GraphicsEngine(Display* display) :
 
 void GraphicsEngine::Update()
 {
-	m_display->Update();
+	if (Status_t::OK != m_display->Update())
+	{
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "Failed to update display";
+	}
 }
 
 void GraphicsEngine::Initialize()
 {
-	m_display->Initialize();
+	if (Status_t::OK != m_display->Initialize())
+	{
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "Failed to initialize";
+	}
 }
 
 void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch)
@@ -132,5 +141,42 @@ void GraphicsEngine::SetFont(BasicFont* font)
 uint32_t GraphicsEngine::GetDisplayHeight()
 {
 	return m_display->GetHeight();
+}
+
+uint32_t GraphicsEngine::GetDisplayWidth()
+{
+	return m_display->GetWidth();
+}
+
+void GraphicsEngine::DrawLine(Point_t point1, Point_t point2, const Color_t color)
+{
+	  int32_t deltaX = abs(point2.X - point1.X);
+	  int32_t deltaY = abs(point2.Y - point1.Y);
+	  int32_t signX = ((point1.X < point2.X) ? 1 : -1);
+	  int32_t signY = ((point1.Y < point2.Y) ? 1 : -1);
+	  int32_t error = deltaX - deltaY;
+	  int32_t error2;
+
+	m_display->DrawPixel(point2, color);
+
+	while ((point1.X != point2.X) || (point1.Y != point2.Y))
+	{
+		m_display->DrawPixel(point1, color);
+		error2 = error * 2;
+		if (error2 > -deltaY)
+		{
+			error -= deltaY;
+			point1.X += signX;
+		} else {
+			/*nothing to do*/
+		}
+
+		if (error2 < deltaX) {
+			error += deltaX;
+			point1.Y += signY;
+		} else {
+			/*nothing to do*/
+		}
+	}
 }
 

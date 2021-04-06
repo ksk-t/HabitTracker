@@ -24,11 +24,11 @@ class SSD1306 : public Display
 public:
 	SSD1306(I2C_HandleTypeDef* i2c_handler) :
 		m_i2c_handler(i2c_handler){};
-	void Initialize() override;
-	void Update() override;
-	void DrawPixel(Point_t point, Color_t color) override;
-	void InvertPixel(Point_t point) override {};
-	void SetContrast(const uint8_t contrast);
+
+	Status_t Initialize() override;
+	Status_t Update() override;
+	Status_t DrawPixel(Point_t point, Color_t color) override;
+	Status_t SetContrast(const uint8_t contrast);
 
 	uint32_t GetHeight() { return HEIGHT; };
 	uint32_t GetWidth()  { return WIDTH;  };
@@ -71,11 +71,11 @@ private:
 	bool m_is_enabled;
 	I2C_HandleTypeDef* m_i2c_handler;
 
-	void WriteCommandByte(uint8_t byte);
-	void WriteCommand(CMD cmd);
-	void WriteCommandBytes(uint8_t* buffer, size_t buffer_size);
-	void WriteData(uint8_t* buffer, size_t buff_size);
-	void SetDisplayEnable(bool enable);
+	Status_t WriteCommandByte(uint8_t byte);
+	Status_t WriteCommand(CMD cmd);
+	Status_t WriteCommandBytes(uint8_t* buffer, size_t buffer_size);
+	Status_t WriteData(uint8_t* buffer, size_t buff_size);
+	Status_t SetDisplayEnable(bool enable);
 
 
 };
