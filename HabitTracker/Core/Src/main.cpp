@@ -83,6 +83,9 @@ osThreadAttr_t statusLedTaskAttributes;
 osThreadId_t ld2TaskHandle;
 osThreadAttr_t ld2TaskAttributes;
 
+// EventFlags
+osEventFlagsId_t error_eventHandle;
+
 // Shared resources
 RealTimeClock rtc{&hrtc};
 
@@ -205,7 +208,8 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
+  error_eventHandle = osEventFlagsNew(NULL);
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -474,8 +478,9 @@ void StatusLEDsTask(void *argument)
 {
 	for (;;)
 	{
-		HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
-		osDelay(1000);
+		osEventFlagsWait(error_eventHandle, 1U, osFlagsNoClear, osWaitForever);
+		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+	    osDelay(500);
 	}
 }
 

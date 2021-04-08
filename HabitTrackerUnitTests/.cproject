@@ -58,6 +58,8 @@
                                     <listOptionValue builtIn="false" value="&quot;C:\Users\keisu\GitProjects\cpputest\include\CppUTest&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/HabitTracker/Drivers/ExternalPeripherals}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/HabitTracker/Core/Src/Utilities}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -116,6 +118,8 @@
                     <sourceEntries>
                         						
                         <entry excluding="BasicFonts.cpp|BasicFonts.h|Color.h|Display.h|GraphicsEngine.cpp|GraphicsEngine.h|Point.h|SSD1306.cpp|SSD1306.h|RealTimeClock.cpp|Date.h|RealTimeClock.h|RealTimeClockUtilities.h|RealTimeClockUtilties.cpp|Status.h" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ExternalPeripherals"/>
+                        						
+                        <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Utilities"/>
                         						
                         <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
                         					

@@ -1,21 +1,24 @@
 /*
  * StatusLED.cpp
  *
- *  Created on: Apr 7, 2021
+ *  Created on: Apr 8, 2021
  *      Author: keisu
  */
 
 #include "StatusLED.h"
+#include "cmsis_os.h"
 
-void StatusLED::SetState(LEDState_t state)
+extern osEventFlagsId_t error_eventHandle;
+
+void StatusLED::SetErrorEvent()
 {
-   m_state = state;
+	osEventFlagsSet(error_eventHandle, 1U);
 }
 
-LEDState_t StatusLED::GetState()
+void StatusLED::ClearErrorEvent()
 {
-   LEDState_t ret = m_state;
-
-   return ret;
+	osEventFlagsClear(error_eventHandle, 1U);
 }
+
+
 

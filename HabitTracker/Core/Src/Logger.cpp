@@ -6,12 +6,14 @@
  */
 
 #include "Logger.h"
+#include "StatusLED.h"
 #include "cmsis_os.h"
 
 extern osMessageQueueId_t g_logger_queueHandle;
 
 #define LOGGING_DEBUG_ENABLE
 #define LOGGING_ERROR_ENABLE
+#define LOGGING_LED_ALERT_ENABLE
 
 std::ostringstream& Logger::Get()
 {
@@ -30,6 +32,9 @@ Logger::~Logger()
 #endif
 		break;
 	case LoggingLevel::Error:
+#ifdef LOGGING_LED_ALERT_ENABLE
+		StatusLED::SetErrorEvent();
+#endif
 #ifndef LOGGING_ERROR_ENABLE
 		return;
 #endif
