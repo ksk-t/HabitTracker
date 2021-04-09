@@ -34,6 +34,7 @@
 #include "RealTimeClock.h"
 #include "GUIStateHabits.h"
 #include "GUIStateClock.h"
+#include "HabitManager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -491,9 +492,10 @@ void GUIControllerTaskThread(void *argument)
 	gEngine.Initialize();
 
 	GUIControllerTask controller{};
+	HabitManager habit_manager{};
 
 //	 State
-	GUIStateHabits state_habits{&gEngine, &controller, &rtc};
+	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
 	controller.AddState(&state_habits, GUIState::HABITS);
 	controller.SetState(GUIState::HABITS);
 

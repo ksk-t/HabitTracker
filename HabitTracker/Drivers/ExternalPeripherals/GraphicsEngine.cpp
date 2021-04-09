@@ -73,18 +73,16 @@ void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
 	}
 }
 
-void GraphicsEngine::DrawStringWrap(Color_t color, std::string string)
+void GraphicsEngine::DrawStringWrap(Point_t point, Color_t color, std::string string)
 {
 	if (string.length() == 0) {
 		return;
 	}
 
-	uint32_t start_x = 0;
-	Point_t point{start_x, m_display->GetHeight() - 1 - m_font->FontHeight};  // - 1 since HEIGHT is 64 but the max height value is 63
 	const size_t max_lines = 10;
 	std::string lines[max_lines];
 
-	size_t num_lines = GraphicsUtilities::WrapText(string, lines, max_lines, m_font->FontWidth, m_display->GetWidth() - start_x);
+	size_t num_lines = GraphicsUtilities::WrapText(string, lines, max_lines, m_font->FontWidth, m_display->GetWidth() - point.X);
 	if (num_lines == 0) {
 		return;
 	}

@@ -59,7 +59,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/HabitTracker/Drivers/ExternalPeripherals}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/HabitTracker/Core/Src/Utilities}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/HabitTracker/Core/Src}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -118,6 +118,8 @@
                     <sourceEntries>
                         						
                         <entry excluding="BasicFonts.cpp|BasicFonts.h|Color.h|Display.h|GraphicsEngine.cpp|GraphicsEngine.h|Point.h|SSD1306.cpp|SSD1306.h|RealTimeClock.cpp|Date.h|RealTimeClock.h|RealTimeClockUtilities.h|RealTimeClockUtilties.cpp|Status.h" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ExternalPeripherals"/>
+                        						
+                        <entry excluding="freertos.c|GUIControllerTask.cpp|GUIControllerTask.h|GUIStateBase.h|GUIStateClock.cpp|GUIStateClock.h|GUIStateHabits.cpp|GUIStateHabits.h|Habit.cpp|Habit.h|Logger.cpp|Logger.h|LoggerTask.cpp|LoggerTask.h|main.cpp|StatusLED.cpp|StatusLED.h|stm32f2xx_hal_msp.c|stm32f2xx_hal_timebase_tim.c|stm32f2xx_it.c|syscalls.c|sysmem.c|system_stm32f2xx.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="SrcApp"/>
                         						
                         <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Utilities"/>
                         						

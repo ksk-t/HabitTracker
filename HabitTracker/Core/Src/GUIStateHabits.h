@@ -10,11 +10,12 @@
 
 #include "GUIStateBase.h"
 #include "RealTimeClock.h"
+#include "HabitManager.h"
 
 class GUIStateHabits : public GUIStateBase
 {
 public:
-	GUIStateHabits(GraphicsEngine* gfx_engine, GUIControllerTask* controller, RealTimeClock* rtc) : GUIStateBase(gfx_engine, controller) , m_rtc(rtc) {};
+	GUIStateHabits(GraphicsEngine* gfx_engine, GUIControllerTask* controller, RealTimeClock* rtc, HabitManager *habit_manager);
 	void UILeft() override {};
 	void UIRight() override {};
 	void UISelect() override {};
@@ -22,8 +23,11 @@ public:
 	void OnLoaded() override;
 protected:
 	RealTimeClock* m_rtc;
+	HabitManager* m_habit_manager;
 private:
-	void DrawHabit();
+
+
+	void DrawHabit(Habit_t);
 };
 
 #endif /* SRC_GUISTATEHABITS_H_ */

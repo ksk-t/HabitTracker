@@ -31,6 +31,11 @@
 			<location>C:/ST/Workspaces/HabitTrackerWorkspace2/HabitTracker/Drivers/ExternalPeripherals</location>
 		</link>
 		<link>
+			<name>SrcApp</name>
+			<type>2</type>
+			<location>C:/ST/Workspaces/HabitTrackerWorkspace2/HabitTracker/Core/Src</location>
+		</link>
+		<link>
 			<name>Utilities</name>
 			<type>2</type>
 			<location>C:/ST/Workspaces/HabitTrackerWorkspace2/HabitTracker/Core/Src/Utilities</location>
