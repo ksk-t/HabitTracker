@@ -35,12 +35,13 @@
 #include "GUIStateHabits.h"
 #include "GUIStateClock.h"
 #include "HabitManager.h"
+#include "StatusLED.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticQueue_t osStaticMessageQDef_t;
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -58,13 +59,33 @@ I2C_HandleTypeDef hi2c1;
 
 RTC_HandleTypeDef hrtc;
 
+TIM_HandleTypeDef htim4;
+
 UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
-/* Definitions for g_logger_queue */
 /* USER CODE BEGIN PV */
-osThreadId_t defaultTaskHandle;
-osThreadAttr_t defaultTask_attributes;
+
+// Threads
+uint64_t loggerTaskBuffer[ 512 ];  // 64 bit to ensure 8 byte alignment
+osStaticThreadDef_t loggerTaskControlBlock;
+osThreadId_t logger_taskHandle;;
+osThreadAttr_t loggerTaskAttributes;
+
+uint64_t guiControllerTaskBuffer[ 4096 ];  // 64 bit to ensure 8 byte alignment
+osStaticThreadDef_t guiControllerControlBlock;
+osThreadId_t gui_controllerHandle;;
+osThreadAttr_t gui_controllerAttributes;
+
+uint64_t statusLedTaskBuffer[ 64 ];  // 64 bit to ensure 8 byte alignment
+osStaticThreadDef_t statusLedTaskControlBlock;
+osThreadId_t statusLedTaskHandle;
+osThreadAttr_t statusLedTaskAttributes;
+
+uint64_t userInputTaskBuffer[ 128 ];  // 64 bit to ensure 8 byte alignment
+osStaticThreadDef_t userInputTaskControlBlock;
+osThreadId_t userInputTaskHandle;
+osThreadAttr_t userInputTaskAttributes;
 
 // Logger Queue Configuration
 static const uint32_t g_logger_queueSize = 3;
@@ -73,16 +94,6 @@ osMessageQueueId_t g_logger_queueHandle;
 uint8_t g_logger_queueBuffer[g_logger_queueItemSize * g_logger_queueSize];
 osStaticMessageQDef_t g_logger_queueControlBlock;
 osMessageQueueAttr_t g_logger_queue_attributes;
-
-// Threads
-osThreadId_t logger_taskHandle;;
-osThreadAttr_t loggerTaskAttributes;
-osThreadId_t gui_controllerHandle;;
-osThreadAttr_t gui_controllerAttributes;
-osThreadId_t statusLedTaskHandle;
-osThreadAttr_t statusLedTaskAttributes;
-osThreadId_t ld2TaskHandle;
-osThreadAttr_t ld2TaskAttributes;
 
 // EventFlags
 osEventFlagsId_t error_eventHandle;
@@ -98,6 +109,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_RTC_Init(void);
+static void MX_TIM4_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -105,6 +117,7 @@ void StatusLEDsTask(void *argument);
 void LD2ToggleThread(void *argument);
 void LoggerTaskThread(void *argument);
 void GUIControllerTaskThread(void *argument);
+void UserInputTask(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,10 +132,6 @@ void GUIControllerTaskThread(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	defaultTask_attributes.name = "defaultTask";
-	defaultTask_attributes.priority = (osPriority_t) osPriorityNormal;
-	defaultTask_attributes.stack_size = 128 * 4;
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -146,7 +155,12 @@ int main(void)
   MX_USART3_UART_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+
+  //Initialize HAL
+  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+
   // Start shared resources
   rtc.Initialize();
 
@@ -167,10 +181,6 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* creation of g_logger_queue */
-  g_logger_queueHandle = osMessageQueueNew (3, 256, &g_logger_queue_attributes);
-
   /* USER CODE BEGIN RTOS_QUEUES */
   g_logger_queue_attributes.name = "g_logger_queue";
   g_logger_queue_attributes.cb_mem = &g_logger_queueControlBlock;
@@ -186,23 +196,39 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   loggerTaskAttributes.name = "LoggerTask";
+  loggerTaskAttributes.cb_mem = &loggerTaskControlBlock;
+  loggerTaskAttributes.cb_size = sizeof(loggerTaskControlBlock);
+  loggerTaskAttributes.stack_mem = &loggerTaskBuffer[0];
+  loggerTaskAttributes.stack_size = sizeof(loggerTaskBuffer);
   loggerTaskAttributes.priority = (osPriority_t) osPriorityNormal;
-  loggerTaskAttributes.stack_size = 1000 * 4;
   logger_taskHandle = osThreadNew(LoggerTaskThread, NULL, &loggerTaskAttributes);
 
   gui_controllerAttributes.name = "GUIControllerTask";
+  gui_controllerAttributes.cb_mem = &guiControllerControlBlock;
+  gui_controllerAttributes.cb_size = sizeof(guiControllerControlBlock);
+  gui_controllerAttributes.stack_mem = &guiControllerTaskBuffer[0];
+  gui_controllerAttributes.stack_size = sizeof(guiControllerTaskBuffer);
   gui_controllerAttributes.priority = (osPriority_t) osPriorityNormal;
-  gui_controllerAttributes.stack_size = 8000;
   gui_controllerHandle = osThreadNew(GUIControllerTaskThread, NULL, &gui_controllerAttributes);
 
-  // Test Threads
   statusLedTaskAttributes.name = "StatusLEDTask";
+  statusLedTaskAttributes.cb_mem = &statusLedTaskControlBlock;
+  statusLedTaskAttributes.cb_size = sizeof(statusLedTaskControlBlock);
+  statusLedTaskAttributes.stack_mem = &statusLedTaskBuffer[0];
+  statusLedTaskAttributes.stack_size = sizeof(statusLedTaskBuffer);
   statusLedTaskAttributes.priority = (osPriority_t) osPriorityNormal;
-  statusLedTaskAttributes.stack_size = 2000;
   statusLedTaskHandle = osThreadNew(StatusLEDsTask, NULL, &statusLedTaskAttributes);
+
+  userInputTaskAttributes.name = "UserInputTask";
+  userInputTaskAttributes.cb_mem = &userInputTaskControlBlock;
+  userInputTaskAttributes.cb_size = sizeof(userInputTaskControlBlock);
+  userInputTaskAttributes.stack_mem = &userInputTaskBuffer[0];
+  userInputTaskAttributes.stack_size = sizeof(userInputTaskBuffer);
+  userInputTaskAttributes.priority = (osPriority_t) osPriorityNormal;
+  userInputTaskHandle = osThreadNew(UserInputTask, NULL, &userInputTaskAttributes);
 //
 //  ld2TaskAttributes.name = "ld2task";
-//  ld2TaskAttributes.priority = (osPriority_t) osPriorityNormal;
+//  ld2TaskAttributes.priosrity = (osPriority_t) osPriorityNormal;
 //  ld2TaskAttributes.stack_size = 1000 * 4;
 //  ld2TaskHandle = osThreadNew(LD2ToggleThread, NULL, &ld2TaskAttributes);
 
@@ -341,6 +367,55 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 
@@ -494,40 +569,16 @@ void GUIControllerTaskThread(void *argument)
 	GUIControllerTask controller{};
 	HabitManager habit_manager{};
 
-//	 State
-	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
-	controller.AddState(&state_habits, GUIState::HABITS);
-	controller.SetState(GUIState::HABITS);
-
-////	// Testing Only
-//	for(;;)
-//	{
-//		for (int i = 0; i < 64; i++)
-//		{
-//			gEngine.Fill(BasicColors::Black());
-//			Point_t test1{0, 30};
-//			Point_t test2{100, i};
-//			Point_t string_point{0, 40};
-//			gEngine.DrawString(string_point, BasicColors::White(), std::to_string(i));
-//			gEngine.DrawLine(test1, test2, BasicColors::White());
-//			gEngine.Update();
-//		}
-////		Time_t current_time = rtc.GetTime();
-////		gEngine.Fill(BasicColors::Black());
-////		gEngine.DrawStringWrap(BasicColors::White(), current_time.ToString(true));
+////	 State
+//	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
+//	controller.AddState(&state_habits, GUIState::HABITS);
+//	controller.SetState(GUIState::HABITS);
 //
-//		osDelay(200);
-//	}
+//	controller.Run();
 
-	controller.Run();
-
-}
-
-void LD2ToggleThread(void *argument)
-{
-	for (;;)
+	for(;;)
 	{
-		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+
 		osDelay(1000);
 	}
 }
@@ -536,6 +587,35 @@ void LoggerTaskThread(void *argument)
 {
 	LoggerTask logger_task{};
 	logger_task.Run();
+}
+
+void UserInputTask(void *argument)
+{
+	// Code depends on the counter having a max value of UINT16_MAX
+	uint16_t prev_position = TIM4->CNT;
+	uint16_t diff = 0;
+	uint16_t current_cnt = 0;
+	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
+
+	for(;;)
+	{
+		current_cnt = TIM4->CNT;
+		diff = current_cnt - prev_position;
+		if (diff <= 65534 && diff >= 2) // This ensures that there is at least a difference of 2 in the count value. 1 notch on the encoder = 2 counter values
+		{
+			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
+			{
+				Logger(LoggingLevel::Debug, "TEST").Get() << "Left";
+			}else
+			{
+				Logger(LoggingLevel::Debug, "TEST").Get() << "Right";
+			}
+
+			prev_position = current_cnt;
+		}
+
+		osDelay(50);
+	}
 }
 /* USER CODE END 4 */
 
