@@ -6,19 +6,15 @@
  */
 
 #include "StatusLED.h"
-#include "cmsis_os.h"
+#include "main.h"
 
-extern osEventFlagsId_t error_eventHandle;
 
 void StatusLED::SetErrorEvent()
 {
-	osEventFlagsSet(error_eventHandle, 1U);
+   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 }
 
 void StatusLED::ClearErrorEvent()
 {
-	osEventFlagsClear(error_eventHandle, 1U);
+   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 }
-
-
-

@@ -20,16 +20,58 @@ GUIStateHabits::GUIStateHabits(GraphicsEngine* gfx_engine, GUIControllerTask* co
 	habit.Streak = 123;
 
 	m_habit_manager->AddHabit(habit);
+
+	habit.Name = "habit 2";
+	habit.IsComplete = false;
+	habit.Streak = 1;
+
+	m_habit_manager->AddHabit(habit);
+}
+
+void GUIStateHabits::UILeft()
+{
+	if (m_habit_index > 0)
+	{
+		Habit_t habit;
+		if (m_habit_manager->GetHabit(--m_habit_index, habit))
+		{
+			DrawHabit(habit);
+		}else
+		{
+			DrawStringWithTime("Error getting habit");
+		}
+	}
+}
+
+void GUIStateHabits::UIRight()
+{
+	if (m_habit_index < m_habit_manager->Count() - 1)
+	{
+		Habit_t habit;
+		if (m_habit_manager->GetHabit(++m_habit_index, habit))
+		{
+			DrawHabit(habit);
+		}else
+		{
+			DrawStringWithTime("Error getting habit");
+		}
+	}
 }
 
 void GUIStateHabits::OnLoaded()
 {
 	Habit_t habit;
-	m_habit_manager->GetHabit(0, habit);
-	DrawHabit(habit);
+	m_habit_index = 0;
+	if (m_habit_manager->GetHabit(m_habit_index, habit))
+	{
+		DrawHabit(habit);
+	}else
+	{
+		DrawStringWithTime("No Habits");
+	}
 }
 
-void GUIStateHabits::DrawHabit(Habit_t habit)
+void GUIStateHabits::DrawStringWithTime(std::string str)
 {
 	BasicFont* font = &Font_7x10;
 	Point_t cursor{0, m_gfx_engine->GetDisplayHeight() - font->FontHeight - 1}; // Display time on top row
@@ -40,14 +82,19 @@ void GUIStateHabits::DrawHabit(Habit_t habit)
 	m_gfx_engine->DrawString(cursor, BasicColors::White(), m_rtc->GetTime().ToString(true));
 	Point_t end_of_line{m_gfx_engine->GetDisplayWidth() - 1, cursor.Y};
 	m_gfx_engine->DrawLine(cursor, end_of_line, BasicColors::White());
+	cursor.Y -= font->FontHeight + 1;
 
-	// Draw habit information
+	// Draw string
+	m_gfx_engine->DrawStringWrap(cursor, BasicColors::White(), str);
+	m_gfx_engine->Update();
+}
+
+void GUIStateHabits::DrawHabit(Habit_t habit)
+{
 	std::string habit_string = habit.Name;
 	habit_string += "\nStatus: ";
 	habit_string += (habit.IsComplete) ? "Complete" : "Incomplete";
 	habit_string += "\nStreak: " + std::to_string(habit.Streak);
-	cursor.Y -= font->FontHeight + 1;
-	m_gfx_engine->DrawStringWrap(cursor, BasicColors::White(), habit_string);
 
-	m_gfx_engine->Update();
+	DrawStringWithTime(habit_string);
 }
