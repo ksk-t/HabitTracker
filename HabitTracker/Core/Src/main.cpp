@@ -42,6 +42,7 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 typedef StaticQueue_t osStaticMessageQDef_t;
 typedef StaticTask_t osStaticThreadDef_t;
@@ -473,6 +474,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
@@ -510,6 +512,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BUTTON_SELECT_Pin */
+  GPIO_InitStruct.Pin = BUTTON_SELECT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BUTTON_SELECT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : RMII_TXD1_Pin */
   GPIO_InitStruct.Pin = RMII_TXD1_Pin;
@@ -574,7 +582,7 @@ void GUIControllerTaskThread(void *argument)
 	UserInput_t input_action;
 	for(;;)
 	{
-		input_action = static_cast<UserInput_t>(osEventFlagsWait(userInput_eventHandle, 3, osFlagsWaitAny, osWaitForever));
+		input_action = static_cast<UserInput_t>(osEventFlagsWait(userInput_eventHandle, 0xff, osFlagsWaitAny, osWaitForever));
 		switch(input_action)
 		{
 		case UserInput_t::Left:
@@ -603,6 +611,11 @@ void UserInputTaskThread(void *argument)
 	Button button{};
 	for (;;)
 	{
+		if (button.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
+		{
+			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Select));
+		}
+
 		if (encoder.HasMoved(TIM4->CNT))
 		{
 			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
@@ -613,7 +626,7 @@ void UserInputTaskThread(void *argument)
 				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Right));
 			}
 		}
-		osDelay(50);
+		osDelay(10);
 	}
 }
 
@@ -636,7 +649,6 @@ void StartDefaultTask(void *argument)
   }
   /* USER CODE END 5 */
 }
-
 
  /**
   * @brief  Period elapsed callback in non blocking mode

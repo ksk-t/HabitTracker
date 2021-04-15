@@ -76,3 +76,18 @@ TEST(HabitManagerTests, get_habit_out_of_range)
 	Habit_t habit;
 	CHECK_FALSE(manager->GetHabit(0, habit));
 }
+
+TEST(HabitManagerTests, toggle_habit_completion)
+{
+	Habit_t test_habit;
+	test_habit.Name = "test name";
+	test_habit.IsComplete = true;
+	test_habit.Streak = 123;
+	manager->AddHabit(test_habit);
+	manager->ToggleHabit(0);
+	manager->GetHabit(0, test_habit);
+	CHECK_FALSE(test_habit.IsComplete);
+	manager->ToggleHabit(0);
+	manager->GetHabit(0, test_habit);
+	CHECK(test_habit.IsComplete);
+}

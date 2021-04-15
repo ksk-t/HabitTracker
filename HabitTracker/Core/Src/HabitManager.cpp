@@ -38,3 +38,21 @@ bool HabitManager::GetHabit(size_t index, Habit_t &habit)
 	habit = m_habits[index];
 	return true;
 }
+
+bool HabitManager::ToggleHabit(size_t index)
+{
+	if (index >= m_count)
+	{
+		return false;
+	}
+
+	if (m_habits[index].IsComplete)
+	{
+		m_habits[index].IsComplete = false;
+	}else
+	{
+		m_habits[index].IsComplete = true;
+	}
+
+	return true;
+}

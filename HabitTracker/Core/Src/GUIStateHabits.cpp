@@ -58,6 +58,14 @@ void GUIStateHabits::UIRight()
 	}
 }
 
+void GUIStateHabits::UISelect()
+{
+	Habit_t habit;
+	m_habit_manager->ToggleHabit(m_habit_index);
+	m_habit_manager->GetHabit(m_habit_index, habit);
+	DrawHabit(habit);
+}
+
 void GUIStateHabits::OnLoaded()
 {
 	Habit_t habit;

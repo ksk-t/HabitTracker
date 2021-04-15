@@ -18,7 +18,7 @@ public:
 	GUIStateHabits(GraphicsEngine* gfx_engine, GUIControllerTask* controller, RealTimeClock* rtc, HabitManager *habit_manager);
 	void UILeft() override;
 	void UIRight() override;
-	void UISelect() override {};
+	void UISelect() override;
 	void UIDraw() override {};
 	void OnLoaded() override;
 protected:
