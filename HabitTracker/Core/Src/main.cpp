@@ -30,10 +30,10 @@
 #include "BasicFonts.h"
 #include "Logger.h"
 #include "LoggerTask.h"
-#include "GUIControllerTask.h"
 #include "RealTimeClock.h"
 #include "GUIStateHabits.h"
 #include "GUIStateClock.h"
+#include "GUIControllerTask.h"
 #include "HabitManager.h"
 #include "RotaryEncoder.h"
 #include "StatusLED.h"
@@ -579,21 +579,28 @@ void GUIControllerTaskThread(void *argument)
 	controller.AddState(&state_habits, GUIState::HABITS);
 	controller.SetState(GUIState::HABITS);
 
-	UserInput_t input_action;
+	uint32_t event_flag{0};
 	for(;;)
 	{
-		input_action = static_cast<UserInput_t>(osEventFlagsWait(userInput_eventHandle, 0xff, osFlagsWaitAny, osWaitForever));
-		switch(input_action)
+		event_flag = osEventFlagsWait(userInput_eventHandle, 0xff, osFlagsWaitAny, controller.RefreshInterval);
+		if (event_flag == osFlagsErrorTimeout)
 		{
-		case UserInput_t::Left:
-			controller.UILeft();
-			break;
-		case UserInput_t::Right:
-			controller.UIRight();
-			break;
-		case UserInput_t::Select:
-			controller.UISelect();
+			controller.UIDraw();
+		}else
+		{
+			switch(static_cast<UserInput_t>(event_flag))
+			{
+			case UserInput_t::Left:
+				controller.UILeft();
+				break;
+			case UserInput_t::Right:
+				controller.UIRight();
+				break;
+			case UserInput_t::Select:
+				controller.UISelect();
+			}
 		}
+
 	}
 }
 

@@ -28,6 +28,7 @@ public:
 	void UIRight() { m_curr_state->UIRight();	};
 	void UISelect() { m_curr_state->UISelect(); };
 
+	uint32_t RefreshInterval{UINT32_MAX};
 private:
 	static const size_t MAX_NUM_STATES = 32;
 	GUIStateBase *m_curr_state = nullptr;

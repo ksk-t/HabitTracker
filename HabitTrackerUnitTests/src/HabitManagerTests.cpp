@@ -87,7 +87,9 @@ TEST(HabitManagerTests, toggle_habit_completion)
 	manager->ToggleHabit(0);
 	manager->GetHabit(0, test_habit);
 	CHECK_FALSE(test_habit.IsComplete);
+	LONGS_EQUAL(122, test_habit.Streak);
 	manager->ToggleHabit(0);
 	manager->GetHabit(0, test_habit);
 	CHECK(test_habit.IsComplete);
+	LONGS_EQUAL(123, test_habit.Streak);
 }

@@ -10,7 +10,7 @@
 
 #include "GraphicsEngine.h"
 
-class GUIControllerTask; // Forward declaration
+class GUIControllerTask;
 
 class GUIStateBase
 {

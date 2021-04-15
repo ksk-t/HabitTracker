@@ -7,6 +7,7 @@
 
 
 #include "GUIStateHabits.h"
+#include "GUIControllerTask.h" // Required to use controller. Header file for GUIStateBase only includes forward delaration. Not only implementation details
 #include "HabitManager.h"
 
 GUIStateHabits::GUIStateHabits(GraphicsEngine* gfx_engine, GUIControllerTask* controller, RealTimeClock* rtc, HabitManager *habit_manager) :
@@ -66,6 +67,13 @@ void GUIStateHabits::UISelect()
 	DrawHabit(habit);
 }
 
+void GUIStateHabits::UIDraw()
+{
+	Habit_t habit;
+	m_habit_manager->GetHabit(m_habit_index, habit);
+	DrawHabit(habit);
+}
+
 void GUIStateHabits::OnLoaded()
 {
 	Habit_t habit;
@@ -77,6 +85,8 @@ void GUIStateHabits::OnLoaded()
 	{
 		DrawStringWithTime("No Habits");
 	}
+
+	m_controller->RefreshInterval = 200;
 }
 
 void GUIStateHabits::DrawStringWithTime(std::string str)
@@ -87,7 +97,7 @@ void GUIStateHabits::DrawStringWithTime(std::string str)
 	// Draw clock on top row
 	m_gfx_engine->SetFont(&Font_7x10);
 	m_gfx_engine->Fill(BasicColors::Black());
-	m_gfx_engine->DrawString(cursor, BasicColors::White(), m_rtc->GetTime().ToString(true));
+	m_gfx_engine->DrawString(cursor, BasicColors::White(), m_rtc->GetTime().ToString());
 	Point_t end_of_line{m_gfx_engine->GetDisplayWidth() - 1, cursor.Y};
 	m_gfx_engine->DrawLine(cursor, end_of_line, BasicColors::White());
 	cursor.Y -= font->FontHeight + 1;

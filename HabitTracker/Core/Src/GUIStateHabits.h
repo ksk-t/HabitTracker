@@ -19,7 +19,7 @@ public:
 	void UILeft() override;
 	void UIRight() override;
 	void UISelect() override;
-	void UIDraw() override {};
+	void UIDraw() override;
 	void OnLoaded() override;
 protected:
 	RealTimeClock* m_rtc;

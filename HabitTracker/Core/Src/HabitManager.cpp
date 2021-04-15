@@ -46,13 +46,19 @@ bool HabitManager::ToggleHabit(size_t index)
 		return false;
 	}
 
-	if (m_habits[index].IsComplete)
+	Habit_t habit = m_habits[index];
+
+	if (habit.IsComplete)
 	{
-		m_habits[index].IsComplete = false;
+		habit.IsComplete = false;
+		habit.Streak--;
 	}else
 	{
-		m_habits[index].IsComplete = true;
+		habit.IsComplete = true;
+		habit.Streak++;
 	}
+
+	m_habits[index] = habit;
 
 	return true;
 }
