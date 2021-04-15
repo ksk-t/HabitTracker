@@ -36,6 +36,9 @@
 #include "GUIStateClock.h"
 #include "HabitManager.h"
 #include "RotaryEncoder.h"
+#include "StatusLED.h"
+#include "UserInput.h"
+#include "Button.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,6 +81,11 @@ osStaticThreadDef_t guiControllerControlBlock;
 osThreadId_t gui_controllerHandle;;
 osThreadAttr_t gui_controllerAttributes;
 
+uint64_t userInputTaskBuffer[ 128 ];  // 64 bit to ensure 8 byte alignment
+osStaticThreadDef_t userInputTaskControlBlock;
+osThreadId_t userInputTaskHandle;
+osThreadAttr_t userInputTaskAttributes;
+
 // Logger Queue Configuration
 static const uint32_t g_logger_queueSize = 3;
 static const uint32_t g_logger_queueItemSize = Logger::BufferItemSize;
@@ -85,6 +93,11 @@ osMessageQueueId_t g_logger_queueHandle;
 uint8_t g_logger_queueBuffer[g_logger_queueItemSize * g_logger_queueSize];
 osStaticMessageQDef_t g_logger_queueControlBlock;
 osMessageQueueAttr_t g_logger_queue_attributes;
+
+// Events
+osEventFlagsId_t userInput_eventHandle;
+osStaticEventGroupDef_t userInput_controlBlock;
+osEventFlagsAttr_t userInput_attributes;
 
 // Shared resources
 RealTimeClock rtc{&hrtc};
@@ -103,6 +116,7 @@ void StartDefaultTask(void *argument);
 /* USER CODE BEGIN PFP */
 void LoggerTaskThread(void *argument);
 void GUIControllerTaskThread(void *argument);
+void UserInputTaskThread(void* argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -173,6 +187,10 @@ int main(void)
   g_logger_queue_attributes.mq_mem = &g_logger_queueBuffer;
   g_logger_queue_attributes.mq_size = sizeof(g_logger_queueBuffer);
   g_logger_queueHandle = osMessageQueueNew (g_logger_queueSize, g_logger_queueItemSize, &g_logger_queue_attributes);
+  if (g_logger_queueHandle == NULL)
+  {
+	  StatusLED::SetErrorEvent();
+  }
 
   /* USER CODE END RTOS_QUEUES */
 
@@ -187,6 +205,10 @@ int main(void)
   loggerTaskAttributes.stack_size = sizeof(loggerTaskBuffer);
   loggerTaskAttributes.priority = (osPriority_t) osPriorityNormal;
   logger_taskHandle = osThreadNew(LoggerTaskThread, NULL, &loggerTaskAttributes);
+  if (g_logger_queueHandle == NULL)
+  {
+	  StatusLED::SetErrorEvent();
+  }
 
   gui_controllerAttributes.name = "GUIControllerTask";
   gui_controllerAttributes.cb_mem = &guiControllerControlBlock;
@@ -195,10 +217,33 @@ int main(void)
   gui_controllerAttributes.stack_size = sizeof(guiControllerTaskBuffer);
   gui_controllerAttributes.priority = (osPriority_t) osPriorityNormal;
   gui_controllerHandle = osThreadNew(GUIControllerTaskThread, NULL, &gui_controllerAttributes);
+  if (gui_controllerHandle == NULL)
+  {
+	  StatusLED::SetErrorEvent();
+  }
 
+  userInputTaskAttributes.name = "UserInputTask";
+  userInputTaskAttributes.cb_mem = &userInputTaskControlBlock;
+  userInputTaskAttributes.cb_size = sizeof(userInputTaskControlBlock);
+  userInputTaskAttributes.stack_mem = &userInputTaskBuffer[0];
+  userInputTaskAttributes.stack_size = sizeof(userInputTaskBuffer);
+  userInputTaskAttributes.priority = (osPriority_t) osPriorityNormal;
+  userInputTaskHandle = osThreadNew(UserInputTaskThread, NULL, &userInputTaskAttributes);
+  if (userInputTaskHandle == NULL)
+  {
+	  StatusLED::SetErrorEvent();
+  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
+  userInput_attributes.name = "UserInputEvent";
+  userInput_attributes.cb_mem = &userInput_controlBlock;
+  userInput_attributes.cb_size = sizeof(userInput_controlBlock);
+  userInput_eventHandle = osEventFlagsNew(&userInput_attributes);
+  if (userInput_eventHandle == NULL)
+  {
+	  StatusLED::SetErrorEvent();
+  }
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -520,25 +565,26 @@ void GUIControllerTaskThread(void *argument)
 
 	GUIControllerTask controller{};
 	HabitManager habit_manager{};
-	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
-	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
 
 //	 State
 	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
 	controller.AddState(&state_habits, GUIState::HABITS);
 	controller.SetState(GUIState::HABITS);
 
+	UserInput_t input_action;
 	for(;;)
 	{
-		if (encoder.HasMoved(TIM4->CNT))
+		input_action = static_cast<UserInput_t>(osEventFlagsWait(userInput_eventHandle, 3, osFlagsWaitAny, osWaitForever));
+		switch(input_action)
 		{
-			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
-			{
-				controller.UILeft();
-			}else
-			{
-				controller.UIRight();
-			}
+		case UserInput_t::Left:
+			controller.UILeft();
+			break;
+		case UserInput_t::Right:
+			controller.UIRight();
+			break;
+		case UserInput_t::Select:
+			controller.UISelect();
 		}
 	}
 }
@@ -547,6 +593,28 @@ void LoggerTaskThread(void *argument)
 {
 	LoggerTask logger_task{};
 	logger_task.Run();
+}
+
+void UserInputTaskThread(void *argument)
+{
+	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
+	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
+
+	Button button{};
+	for (;;)
+	{
+		if (encoder.HasMoved(TIM4->CNT))
+		{
+			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
+			{
+				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Left));
+			}else
+			{
+				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Right));
+			}
+		}
+		osDelay(50);
+	}
 }
 
 /* USER CODE END 4 */
@@ -568,6 +636,7 @@ void StartDefaultTask(void *argument)
   }
   /* USER CODE END 5 */
 }
+
 
  /**
   * @brief  Period elapsed callback in non blocking mode
