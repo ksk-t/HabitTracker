@@ -14,12 +14,12 @@ size_t HabitManager::Count()
 
 size_t HabitManager::MaxCount()
 {
-	return MAX_COUNT;
+	return m_habits.size();
 }
 
 bool HabitManager::AddHabit(Habit_t habit)
 {
-	if (m_count >= MAX_COUNT)
+	if (m_count >= m_habits.size())
 	{
 		return false;
 	}
@@ -65,15 +65,12 @@ bool HabitManager::ToggleHabit(size_t index)
 
 void HabitManager::Reset()
 {
-	Habit_t habit;
-	for (size_t i = 0; i < m_count; i++)
+	for (Habit_t &habit : m_habits)
 	{
-		habit = m_habits[i];
 		if (!habit.IsComplete)
 		{
 			habit.Streak = 0;
 		}
 		habit.IsComplete = false;
-		m_habits[i] = habit;
 	}
 }

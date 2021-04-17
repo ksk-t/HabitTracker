@@ -9,6 +9,7 @@
 #define SRC_GUICONTROLLER_H_
 
 #include "GUIStateBase.h"
+#include <array>
 
 enum class GUIState : uint32_t {
 	Clock,
@@ -19,6 +20,7 @@ enum class GUIState : uint32_t {
 class GUIControllerTask
 {
 public:
+	GUIControllerTask();
 	bool AddState(GUIStateBase *state_ptr, GUIState state_enum);
 	void SetState(GUIState new_state);
 	void Initialize();
@@ -32,7 +34,7 @@ public:
 private:
 	static const size_t MAX_NUM_STATES = 32;
 	GUIStateBase *m_curr_state = nullptr;
-	GUIStateBase *m_states[MAX_NUM_STATES];
+	std::array<GUIStateBase*, MAX_NUM_STATES> m_states;
 };
 
 #endif /* SRC_GUICONTROLLER_H_ */

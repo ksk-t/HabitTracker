@@ -11,10 +11,15 @@
 
 static const std::string MODULE_NAME = "GUIController";
 
+GUIControllerTask::GUIControllerTask()
+{
+	m_states.fill(nullptr);
+}
+
 bool GUIControllerTask::AddState(GUIStateBase* state_ptr, GUIState state_enum)
 {
 	uint32_t state_int = static_cast<uint32_t>(state_enum);
-	if (state_int >= MAX_NUM_STATES)
+	if (state_int >= m_states.size())
 	{
 		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "AddState: Failed to add state. Max number of states reached";
 		return false;

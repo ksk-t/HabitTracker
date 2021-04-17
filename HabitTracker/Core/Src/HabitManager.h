@@ -10,6 +10,7 @@
 
 
 #include "Habit.h"
+#include <array>
 
 class HabitManager
 {
@@ -21,8 +22,7 @@ public:
    size_t Count();
    size_t MaxCount();
 private:
-   static const size_t MAX_COUNT{10};
-   Habit_t m_habits[MAX_COUNT];
+   std::array<Habit_t, 10> m_habits;
    size_t m_count{0};
 };
 

@@ -110,7 +110,7 @@ TEST(HabitManagerTests, set_all_incomplete)
 	test_habit.Streak = 321;
 	manager->AddHabit(test_habit);
 
-	manager->SetAllIncomplete();
+	manager->Reset();
 	for (size_t i = 0; i < manager->Count(); i++)
 	{
 		Habit_t habit;

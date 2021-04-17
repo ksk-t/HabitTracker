@@ -37,7 +37,6 @@
 #include "HabitManager.h"
 #include "RotaryEncoder.h"
 #include "StatusLED.h"
-#include "GUIEvents.h"
 #include "Button.h"
 /* USER CODE END Includes */
 
@@ -82,11 +81,6 @@ osStaticThreadDef_t guiControllerControlBlock;
 osThreadId_t gui_controllerHandle;;
 osThreadAttr_t gui_controllerAttributes;
 
-uint64_t userInputTaskBuffer[ 128 ];  // 64 bit to ensure 8 byte alignment
-osStaticThreadDef_t userInputTaskControlBlock;
-osThreadId_t userInputTaskHandle;
-osThreadAttr_t userInputTaskAttributes;
-
 // Logger Queue Configuration
 static const uint32_t g_logger_queueSize = 3;
 static const uint32_t g_logger_queueItemSize = Logger::BufferItemSize;
@@ -96,9 +90,6 @@ osStaticMessageQDef_t g_logger_queueControlBlock;
 osMessageQueueAttr_t g_logger_queue_attributes;
 
 // Events
-osEventFlagsId_t userInput_eventHandle;
-osStaticEventGroupDef_t userInput_controlBlock;
-osEventFlagsAttr_t userInput_attributes;
 
 // Shared resources
 RealTimeClock rtc{&hrtc};
@@ -118,7 +109,6 @@ void StartDefaultTask(void *argument);
 /* USER CODE BEGIN PFP */
 void LoggerTaskThread(void *argument);
 void GUIControllerTaskThread(void *argument);
-void UserInputTaskThread(void* argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -227,28 +217,9 @@ int main(void)
 	  StatusLED::SetErrorEvent();
   }
 
-  userInputTaskAttributes.name = "UserInputTask";
-  userInputTaskAttributes.cb_mem = &userInputTaskControlBlock;
-  userInputTaskAttributes.cb_size = sizeof(userInputTaskControlBlock);
-  userInputTaskAttributes.stack_mem = &userInputTaskBuffer[0];
-  userInputTaskAttributes.stack_size = sizeof(userInputTaskBuffer);
-  userInputTaskAttributes.priority = (osPriority_t) osPriorityNormal;
-  userInputTaskHandle = osThreadNew(UserInputTaskThread, NULL, &userInputTaskAttributes);
-  if (userInputTaskHandle == NULL)
-  {
-	  StatusLED::SetErrorEvent();
-  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  userInput_attributes.name = "UserInputEvent";
-  userInput_attributes.cb_mem = &userInput_controlBlock;
-  userInput_attributes.cb_size = sizeof(userInput_controlBlock);
-  userInput_eventHandle = osEventFlagsNew(&userInput_attributes);
-  if (userInput_eventHandle == NULL)
-  {
-	  StatusLED::SetErrorEvent();
-  }
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -629,32 +600,35 @@ void GUIControllerTaskThread(void *argument)
 	controller.AddState(&state_habits, GUIState::HABITS);
 	controller.SetState(GUIState::HABITS);
 
-	uint32_t event_flag{0};
+	Button select_btn{};
+	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
+	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
+
 	for(;;)
 	{
-		event_flag = osEventFlagsWait(userInput_eventHandle, 0xffff, osFlagsWaitAny, controller.RefreshInterval);
-		if (event_flag == osFlagsErrorTimeout)
+		if (resetHabitEvent)
 		{
+			habit_manager.Reset();
 			controller.UIDraw();
-		}else
+			resetHabitEvent = false;
+		}
+
+		if (select_btn.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
 		{
-			switch(static_cast<GUIEvents_t>(event_flag))
+			controller.UISelect();
+		}
+
+		if (encoder.HasMoved(TIM4->CNT))
+		{
+			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
 			{
-			case GUIEvents_t::EncoderLeft:
 				controller.UILeft();
-				break;
-			case GUIEvents_t::EncoderRight:
+			}else
+			{
 				controller.UIRight();
-				break;
-			case GUIEvents_t::ButtonSelect:
-				controller.UISelect();
-				break;
-			case GUIEvents_t::ResetHabits:
-				habit_manager.Reset();
-				controller.UIDraw();
-				break;
 			}
 		}
+		osDelay(10);
 	}
 }
 
@@ -664,38 +638,6 @@ void LoggerTaskThread(void *argument)
 	logger_task.Run();
 }
 
-void UserInputTaskThread(void *argument)
-{
-	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
-	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
-
-	Button select_btn{};
-	for (;;)
-	{
-		if (resetHabitEvent)
-		{
-			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::ResetHabits));
-			resetHabitEvent = false;
-		}
-
-		if (select_btn.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
-		{
-			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::ButtonSelect));
-		}
-
-		if (encoder.HasMoved(TIM4->CNT))
-		{
-			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
-			{
-				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::EncoderLeft));
-			}else
-			{
-				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::EncoderRight));
-			}
-		}
-		osDelay(10);
-	}
-}
 
 /* USER CODE END 4 */
 
