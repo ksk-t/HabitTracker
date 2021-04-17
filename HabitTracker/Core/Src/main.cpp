@@ -37,7 +37,7 @@
 #include "HabitManager.h"
 #include "RotaryEncoder.h"
 #include "StatusLED.h"
-#include "UserInput.h"
+#include "GUIEvents.h"
 #include "Button.h"
 /* USER CODE END Includes */
 
@@ -103,6 +103,7 @@ osEventFlagsAttr_t userInput_attributes;
 // Shared resources
 RealTimeClock rtc{&hrtc};
 
+volatile bool resetHabitEvent = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -122,7 +123,10 @@ void UserInputTaskThread(void* argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void HAL_RTC_AlarmAEventCallback (RTC_HandleTypeDef * hrtc)
+{
+	resetHabitEvent = true; // Work Around: Calling osEventFlagsSet() fails when called inside this ISR
+}
 /* USER CODE END 0 */
 
 /**
@@ -356,6 +360,10 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+  RTC_AlarmTypeDef sAlarm = {0};
+
   /* USER CODE BEGIN RTC_Init 1 */
 
   /* USER CODE END RTC_Init 1 */
@@ -369,6 +377,48 @@ static void MX_RTC_Init(void)
   hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x1;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+  sTime.TimeFormat = RTC_HOURFORMAT12_AM;
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
+  sDate.Date = 0x1;
+  sDate.Year = 0x0;
+
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Enable the Alarm A
+  */
+  sAlarm.AlarmTime.Hours = 0x12;
+  sAlarm.AlarmTime.Minutes = 0x0;
+  sAlarm.AlarmTime.Seconds = 0x0;
+  sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT12_AM;
+  sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+  sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+  sAlarm.AlarmDateWeekDay = 0x1;
+  sAlarm.Alarm = RTC_ALARM_A;
+  if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BCD) != HAL_OK)
   {
     Error_Handler();
   }
@@ -582,25 +632,29 @@ void GUIControllerTaskThread(void *argument)
 	uint32_t event_flag{0};
 	for(;;)
 	{
-		event_flag = osEventFlagsWait(userInput_eventHandle, 0xff, osFlagsWaitAny, controller.RefreshInterval);
+		event_flag = osEventFlagsWait(userInput_eventHandle, 0xffff, osFlagsWaitAny, controller.RefreshInterval);
 		if (event_flag == osFlagsErrorTimeout)
 		{
 			controller.UIDraw();
 		}else
 		{
-			switch(static_cast<UserInput_t>(event_flag))
+			switch(static_cast<GUIEvents_t>(event_flag))
 			{
-			case UserInput_t::Left:
+			case GUIEvents_t::EncoderLeft:
 				controller.UILeft();
 				break;
-			case UserInput_t::Right:
+			case GUIEvents_t::EncoderRight:
 				controller.UIRight();
 				break;
-			case UserInput_t::Select:
+			case GUIEvents_t::ButtonSelect:
 				controller.UISelect();
+				break;
+			case GUIEvents_t::ResetHabits:
+				habit_manager.Reset();
+				controller.UIDraw();
+				break;
 			}
 		}
-
 	}
 }
 
@@ -615,22 +669,28 @@ void UserInputTaskThread(void *argument)
 	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
 	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
 
-	Button button{};
+	Button select_btn{};
 	for (;;)
 	{
-		if (button.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
+		if (resetHabitEvent)
 		{
-			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Select));
+			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::ResetHabits));
+			resetHabitEvent = false;
+		}
+
+		if (select_btn.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
+		{
+			osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::ButtonSelect));
 		}
 
 		if (encoder.HasMoved(TIM4->CNT))
 		{
 			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
 			{
-				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Left));
+				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::EncoderLeft));
 			}else
 			{
-				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(UserInput_t::Right));
+				osEventFlagsSet(userInput_eventHandle, static_cast<uint32_t>(GUIEvents_t::EncoderRight));
 			}
 		}
 		osDelay(10);

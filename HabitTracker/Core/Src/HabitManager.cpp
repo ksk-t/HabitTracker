@@ -62,3 +62,18 @@ bool HabitManager::ToggleHabit(size_t index)
 
 	return true;
 }
+
+void HabitManager::Reset()
+{
+	Habit_t habit;
+	for (size_t i = 0; i < m_count; i++)
+	{
+		habit = m_habits[i];
+		if (!habit.IsComplete)
+		{
+			habit.Streak = 0;
+		}
+		habit.IsComplete = false;
+		m_habits[i] = habit;
+	}
+}

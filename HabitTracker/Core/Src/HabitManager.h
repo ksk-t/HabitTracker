@@ -17,6 +17,7 @@ public:
    bool AddHabit(Habit_t habit);
    bool GetHabit(size_t index, Habit_t &habit);
    bool ToggleHabit(size_t index);
+   void Reset();
    size_t Count();
    size_t MaxCount();
 private:

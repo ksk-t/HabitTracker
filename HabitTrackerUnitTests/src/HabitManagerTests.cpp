@@ -93,3 +93,36 @@ TEST(HabitManagerTests, toggle_habit_completion)
 	CHECK(test_habit.IsComplete);
 	LONGS_EQUAL(123, test_habit.Streak);
 }
+
+TEST(HabitManagerTests, set_all_incomplete)
+{
+	Habit_t test_habit;
+	test_habit.Name = "test name";
+	test_habit.IsComplete = true;
+	test_habit.Streak = 123;
+	manager->AddHabit(test_habit);
+
+	test_habit.IsComplete = false;
+	test_habit.Streak = 23;
+	manager->AddHabit(test_habit);
+
+	test_habit.IsComplete = true;
+	test_habit.Streak = 321;
+	manager->AddHabit(test_habit);
+
+	manager->SetAllIncomplete();
+	for (size_t i = 0; i < manager->Count(); i++)
+	{
+		Habit_t habit;
+		manager->GetHabit(i, habit);
+		CHECK_FALSE(habit.IsComplete);
+	}
+
+	manager->GetHabit(0, test_habit);
+	LONGS_EQUAL(123, test_habit.Streak);
+	manager->GetHabit(1, test_habit);
+	LONGS_EQUAL(0, test_habit.Streak);
+	manager->GetHabit(2, test_habit);
+	LONGS_EQUAL(321, test_habit.Streak);
+}
+

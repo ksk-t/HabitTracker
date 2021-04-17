@@ -29,10 +29,10 @@ void RealTimeClock::Initialize()
    HAL_RTC_SetDate(m_handle ,&date_structure , RTC_FORMAT_BIN);
 
    // Configure Time
-   time_structure.Hours = 12;
-   time_structure.Minutes = 0;
-   time_structure.Seconds = 0;
-   time_structure.TimeFormat = RTC_HOURFORMAT12_AM;
+   time_structure.Hours = 11;
+   time_structure.Minutes = 59;
+   time_structure.Seconds = 55;
+   time_structure.TimeFormat = RTC_HOURFORMAT12_PM;
    time_structure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
    time_structure.StoreOperation = RTC_STOREOPERATION_RESET;
    HAL_RTC_SetTime(m_handle, &time_structure, RTC_FORMAT_BIN);
