@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <array>
 
 class IOStreamBase
 {
@@ -27,6 +28,8 @@ public:
 	// @param size Size of buffer
 	// @return number of bytes actually written
 	virtual size_t Write(uint8_t* buffer, size_t size) {return 0;};
+
+	virtual ~IOStreamBase() {};
 };
 
 

@@ -22,8 +22,8 @@ class CommandCallableBase
 {
 protected:
 	virtual ~CommandCallableBase() {};
-private:
-	virtual void CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream) {};
+public:
+	virtual cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream) {return cmd_status_t::Ok; };
 };
 
 

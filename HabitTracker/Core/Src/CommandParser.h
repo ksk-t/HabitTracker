@@ -12,6 +12,7 @@
 #include "CommandCallableBase.h"
 #include <functional>
 #include <string>
+#include <array>
 
 enum class Module_t
 {
@@ -29,6 +30,7 @@ struct Command_t
 class CommandParser
 {
 public:
+	CommandParser();
 	/*
 	 * Reads streams and executes command if a registered command matches the stream input
 	 *
@@ -36,7 +38,7 @@ public:
 	 *
 	 * @return True on success, false otherwise
 	 */
-	bool Execute(IOStreamBase iostream); // commant parser sends down io stream to executing function which an write to io stream
+	bool Execute(IOStreamBase* iostream); // commant parser sends down io stream to executing function which an write to io stream
 
 	/*
 	 * Registers a module
@@ -57,8 +59,11 @@ public:
 	 */
 	bool RegisterCommand(Command_t command);
 
+	size_t MaxCommands();
 private:
-	static const size_t MAX_NUM_MODULES = 5;
+	std::array<CommandCallableBase*, 10> m_module_callbacks;
+	std::array<Command_t, 32> m_commands;
+	size_t m_num_commands{0};
 };
 
 
