@@ -36,14 +36,13 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 {
 	const size_t buffer_size = 128;
 	uint8_t read_buffer[buffer_size];
-
 	size_t byte_read = iostream->Read(read_buffer, buffer_size);
-
 	std::string cmd_str = "";
 	size_t cmd_index = 0;
+	uint8_t msg_invalid_cmd[] = "Invalid command";
 
-	// Extract command from buffer. Command ends on a white space
-	while (cmd_index < byte_read && read_buffer[cmd_index] != static_cast<uint8_t>(' ') && read_buffer[cmd_index] != 0)
+	// Extract command from buffer
+	while (cmd_index < byte_read && read_buffer[cmd_index] != static_cast<uint8_t>(' ') && read_buffer[cmd_index] != 0 && read_buffer[cmd_index] != '\r')
 	{
 		cmd_str += read_buffer[cmd_index++];
 	}
@@ -55,6 +54,7 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 	}
 
 	// Search command list for given command
+	// TODO: Loop through number of REGISTERED commands. no need to loop through the entire list, some may not be allocated
 	for (Command_t cmd : m_commands)
 	{
 		if (cmd_str == cmd.Name)
@@ -64,6 +64,8 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 			return true;
 		}
 	}
+
+	iostream->Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
 	return false;
 }
 

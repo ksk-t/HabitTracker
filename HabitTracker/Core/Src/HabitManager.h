@@ -8,11 +8,14 @@
 #ifndef SRC_HABITMANAGER_H_
 #define SRC_HABITMANAGER_H_
 
-
 #include "Habit.h"
+#include "CommandCallableBase.h"
 #include <array>
 
-class HabitManager
+// Command Codes
+#define HABIT_MANAGER_CMD_RESET 0
+
+class HabitManager : public CommandCallableBase
 {
 public:
    bool AddHabit(Habit_t habit);
@@ -21,6 +24,8 @@ public:
    void Reset();
    size_t Count();
    size_t MaxCount();
+
+   cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream);
 private:
    std::array<Habit_t, 10> m_habits;
    size_t m_count{0};

@@ -38,6 +38,8 @@
 #include "RotaryEncoder.h"
 #include "StatusLED.h"
 #include "Button.h"
+#include "IOStreamUART.h"
+#include "CommandParser.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,6 +119,7 @@ void HAL_RTC_AlarmAEventCallback (RTC_HandleTypeDef * hrtc)
 {
 	resetHabitEvent = true; // Work Around: Calling osEventFlagsSet() fails when called inside this ISR
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -604,6 +607,20 @@ void GUIControllerTaskThread(void *argument)
 	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
 	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
 
+	IOStreamUART uart_stream{&huart3};
+	uart_stream.TransmitStartChars();
+	uint8_t end_of_line = '\r';
+
+	// Register commands
+	CommandParser parser{};
+	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
+	Command_t cmd;
+	cmd.Code = HABIT_MANAGER_CMD_RESET;
+	cmd.Name = "resethabits";
+	cmd.Module = Module_t::HabitManager;
+	cmd.Help = "Reset all habits";
+	parser.RegisterCommand(cmd);
+
 	for(;;)
 	{
 		if (resetHabitEvent)
@@ -627,6 +644,17 @@ void GUIControllerTaskThread(void *argument)
 			{
 				controller.UIRight();
 			}
+		}
+   
+      size_t bytes_available = 0;
+		if ((bytes_available = uart_stream.BytesAvailable()))
+		{
+         uint8_t last_char = 0;
+         if (uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line)
+         {
+            parser.Execute(&uart_stream);
+            uart_stream.TransmitStartChars();
+         }
 		}
 		osDelay(10);
 	}
