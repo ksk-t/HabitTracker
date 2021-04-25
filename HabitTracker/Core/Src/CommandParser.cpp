@@ -54,9 +54,9 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 	}
 
 	// Search command list for given command
-	// TODO: Loop through number of REGISTERED commands. no need to loop through the entire list, some may not be allocated
-	for (Command_t cmd : m_commands)
+	for (size_t i = 0; i < m_num_commands;i++)
 	{
+		Command_t cmd = m_commands[i];
 		if (cmd_str == cmd.Name)
 		{
 			size_t module_index = static_cast<size_t>(cmd.Module);
