@@ -57,6 +57,13 @@ public:
    size_t BytesAvailable();
 
    /*
+    * Determines if the receive buffer is full
+    *
+    * @param Returns true if the receive buffer is full, false otherwise
+    */
+   bool IsRxBufferFull();
+
+   /*
     * Set up UART to receive input
     */
    void TransmitStartChars();

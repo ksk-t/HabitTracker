@@ -41,22 +41,16 @@ size_t IOStreamUART::Read(uint8_t* buffer, size_t size)
    size_t bytes_read = 0;
 
    // Fill read buffer with available data 
-   while ((bytes_read < size) && (bytes_read + m_read_offset < m_bytes_available))
+   while ((bytes_read < size) && (bytes_read < m_bytes_available))
    {
-      buffer[bytes_read] = m_rx_buffer[bytes_read + m_read_offset];
+      buffer[bytes_read] = m_rx_buffer[bytes_read];
       bytes_read++;    
    }
 
-   // Not enough space in buffer provided. User will need to call read again to get remaining data
-   if (bytes_read >= size)
-   {
-	   m_read_offset = bytes_read;
-   }else
-   {
-      HAL_UART_AbortReceive_IT(m_uart_handle);
-      m_bytes_available = 0;
-      HAL_UART_Receive_IT(m_uart_handle, m_rx_interrupt_buffer, RX_INTERRUPT_BUFFER_SIZE);
-   }
+   // Resets buffer even if all bytes weren't read. This simplifies the logic for now.
+   HAL_UART_AbortReceive_IT(m_uart_handle);
+   m_bytes_available = 0;
+   HAL_UART_Receive_IT(m_uart_handle, m_rx_interrupt_buffer, RX_INTERRUPT_BUFFER_SIZE);
 
    return bytes_read;
 }
@@ -70,6 +64,11 @@ size_t IOStreamUART::Write(uint8_t* buffer, size_t size)
 size_t IOStreamUART::BytesAvailable()
 {
    return m_bytes_available;
+}
+
+bool IOStreamUART::IsRxBufferFull()
+{
+	return m_bytes_available == RX_BUFFER_SIZE;
 }
 
 bool IOStreamUART::Peak(size_t index, uint8_t &value)

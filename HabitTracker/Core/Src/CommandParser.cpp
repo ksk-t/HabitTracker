@@ -39,7 +39,6 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 	size_t byte_read = iostream->Read(read_buffer, buffer_size);
 	std::string cmd_str = "";
 	size_t cmd_index = 0;
-	uint8_t msg_invalid_cmd[] = "Invalid command";
 
 	// Extract command from buffer
 	while (cmd_index < byte_read && read_buffer[cmd_index] != static_cast<uint8_t>(' ') && read_buffer[cmd_index] != 0 && read_buffer[cmd_index] != '\r')
@@ -65,7 +64,6 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 		}
 	}
 
-	iostream->Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
 	return false;
 }
 

@@ -40,6 +40,7 @@
 #include "Button.h"
 #include "IOStreamUART.h"
 #include "CommandParser.h"
+#include "BasicTimer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -621,8 +622,19 @@ void GUIControllerTaskThread(void *argument)
 	cmd.Help = "Reset all habits";
 	parser.RegisterCommand(cmd);
 
+	BasicTimer gui_refresh_timer{};
+	gui_refresh_timer.Start(osKernelGetTickCount(), controller.RefreshInterval);
+
+	uint8_t msg_invalid_cmd[] = "Invalid command";
+
 	for(;;)
 	{
+		if (gui_refresh_timer.HasExpired(osKernelGetTickCount()))
+		{
+			controller.UIDraw();
+			gui_refresh_timer.Start(osKernelGetTickCount(), controller.RefreshInterval);
+		}
+
 		if (resetHabitEvent)
 		{
 			habit_manager.Reset();
@@ -645,17 +657,21 @@ void GUIControllerTaskThread(void *argument)
 				controller.UIRight();
 			}
 		}
-   
-      size_t bytes_available = 0;
+
+		size_t bytes_available = 0;
 		if ((bytes_available = uart_stream.BytesAvailable()))
 		{
          uint8_t last_char = 0;
-         if (uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line)
+         if ((uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line) || uart_stream.IsRxBufferFull())
          {
-            parser.Execute(&uart_stream);
+            if (false == parser.Execute(&uart_stream))
+            {
+            	uart_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
+            }
             uart_stream.TransmitStartChars();
          }
 		}
+
 		osDelay(10);
 	}
 }
