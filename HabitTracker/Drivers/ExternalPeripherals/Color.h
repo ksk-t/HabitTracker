@@ -29,8 +29,8 @@ struct Color_t
 
 struct BasicColors
 {
-	static Color_t Black() { return Color_t{0,0,0}; };
-	static Color_t White() { return Color_t{255, 255, 255}; };
+	static const Color_t Black;
+	static const Color_t White;
 };
 
 #endif /* COLOR_H_ */

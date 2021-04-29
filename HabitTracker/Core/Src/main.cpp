@@ -594,23 +594,23 @@ void GUIControllerTaskThread(void *argument)
 {
 	SSD1306 ssd1306{&hi2c1};
 	GraphicsEngine gEngine{&ssd1306};
-	gEngine.Initialize();
-
 	GUIControllerTask controller{};
 	HabitManager habit_manager{};
+	gEngine.Initialize();
 
-//	 State
+	// Setup GUI States
 	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
 	controller.AddState(&state_habits, GUIState::HABITS);
 	controller.SetState(GUIState::HABITS);
 
+	// Setup user inputs
 	Button select_btn{};
 	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
 	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
-
 	IOStreamUART uart_stream{&huart3};
 	uart_stream.TransmitStartChars();
 	uint8_t end_of_line = '\r';
+	uint8_t msg_invalid_cmd[] = "Invalid command";
 
 	// Register commands
 	CommandParser parser{};
@@ -621,11 +621,15 @@ void GUIControllerTaskThread(void *argument)
 	cmd.Module = Module_t::HabitManager;
 	cmd.Help = "Reset all habits";
 	parser.RegisterCommand(cmd);
+	cmd.Code = HABIT_MANAGER_CMD_ADD_HABIT;
+	cmd.Name = "addhabit";
+	cmd.Module = Module_t::HabitManager;
+	cmd.Help = "Add habit";
+	parser.RegisterCommand(cmd);
 
+	// Setup refresh timer
 	BasicTimer gui_refresh_timer{};
 	gui_refresh_timer.Start(osKernelGetTickCount(), controller.RefreshInterval);
-
-	uint8_t msg_invalid_cmd[] = "Invalid command";
 
 	for(;;)
 	{

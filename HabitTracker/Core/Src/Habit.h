@@ -13,9 +13,9 @@
 
 struct Habit_t
 {
-	std::string Name;
-   bool IsComplete;
-   uint32_t Streak;
+	std::string Name{""};
+   bool IsComplete{false};
+   uint32_t Streak{0};
 };
 
 #endif

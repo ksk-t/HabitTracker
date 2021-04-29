@@ -86,6 +86,32 @@ cmd_status_t HabitManager::CommandCallback(uint8_t* buffer, size_t size, uint32_
 		iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
 		break;
 	}
+	case HABIT_MANAGER_CMD_ADD_HABIT:
+	{
+		if (size > 0)
+		{
+			Habit_t habit;
+			for (size_t i = 0; i < size; i++)
+			{
+				habit.Name += (char)buffer[i];
+			}
+			if (AddHabit(habit))
+			{
+				uint8_t msg[] = "Habit added";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}else
+			{
+				uint8_t msg[] = "FAILED TO ADD HABIT";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}
+		}else
+		{
+			uint8_t msg[] = "FAILED TO ADD HABIT: Empty name string";
+			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+		}
+
+		break;
+	}
 	default:
 		return cmd_status_t::InvalidCode;
 	}

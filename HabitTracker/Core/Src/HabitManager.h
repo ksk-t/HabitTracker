@@ -14,6 +14,7 @@
 
 // Command Codes
 #define HABIT_MANAGER_CMD_RESET 0
+#define HABIT_MANAGER_CMD_ADD_HABIT 1
 
 class HabitManager : public CommandCallableBase
 {

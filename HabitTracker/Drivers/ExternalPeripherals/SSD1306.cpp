@@ -144,7 +144,7 @@ Status_t SSD1306::DrawPixel(Point_t point, Color_t color)
         return Status_t::OK;
     }
 
-    if(color == BasicColors::Black())
+    if(color == BasicColors::Black)
     {
     	m_buffer[point.X + (point.Y / 8) * WIDTH] &= ~(1 << (point.Y % 8));
     } else

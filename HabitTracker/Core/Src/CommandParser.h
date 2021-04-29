@@ -59,11 +59,18 @@ public:
 	 */
 	bool RegisterCommand(Command_t command);
 
+
+
 	size_t MaxCommands();
 private:
 	std::array<CommandCallableBase*, 10> m_module_callbacks;
 	std::array<Command_t, 32> m_commands;
 	size_t m_num_commands{0};
+
+	/*
+	 * Prints out help text to the io stream
+	 */
+	void PrintHelp(IOStreamBase* iostream);
 };
 
 

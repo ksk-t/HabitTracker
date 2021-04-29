@@ -33,8 +33,8 @@ void GUIStateClock::DrawTime()
 	m_gfx_engine->SetFont(font);
 	Point_t point{0, m_gfx_engine->GetDisplayHeight() / 2 - font->FontHeight / 2};
 
-	m_gfx_engine->Fill(BasicColors::Black());
-	m_gfx_engine->DrawString(point, BasicColors::White(),  "testval");
+	m_gfx_engine->Fill(BasicColors::Black);
+	m_gfx_engine->DrawString(point, BasicColors::White,  "testval");
 	m_gfx_engine->Update();
 }
 

@@ -7,6 +7,7 @@
 
 #include "CommandParser.h"
 #include <cstring>
+#include <algorithm>
 
 CommandParser::CommandParser()
 {
@@ -35,7 +36,7 @@ bool CommandParser::RegisterCommand(Command_t command)
 bool CommandParser::Execute(IOStreamBase* iostream)
 {
 	const size_t buffer_size = 128;
-	uint8_t read_buffer[buffer_size];
+	uint8_t read_buffer[buffer_size] = {0};
 	size_t byte_read = iostream->Read(read_buffer, buffer_size);
 	std::string cmd_str = "";
 	size_t cmd_index = 0;
@@ -46,25 +47,62 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 		cmd_str += read_buffer[cmd_index++];
 	}
 
-	// Find start of command values
-	while (cmd_index < byte_read && read_buffer[cmd_index] == static_cast<uint8_t>(' '))
+	if (cmd_str == "help")
 	{
-		cmd_index++;
-	}
+		PrintHelp(iostream);
+		return true;
+	}else
+	{
+		// Find start of command values
+		while (cmd_index < byte_read && (read_buffer[cmd_index] == static_cast<uint8_t>(' ') || read_buffer[cmd_index] == static_cast<uint8_t>('\r')))
+		{
+			cmd_index++;
+		}
 
-	// Search command list for given command
+		// Search command list for given command
+		for (size_t i = 0; i < m_num_commands;i++)
+		{
+			Command_t cmd = m_commands[i];
+			if (cmd_str == cmd.Name)
+			{
+				size_t module_index = static_cast<size_t>(cmd.Module);
+				m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, byte_read - cmd_index, cmd.Code, iostream);
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
+void CommandParser::PrintHelp(IOStreamBase* iostream)
+{
+	const size_t write_buffer_size = 128;
+	uint8_t write_buffer[write_buffer_size] = {0};
 	for (size_t i = 0; i < m_num_commands;i++)
 	{
 		Command_t cmd = m_commands[i];
-		if (cmd_str == cmd.Name)
+		size_t j = 0;
+		for (; j < cmd.Name.size() && j < write_buffer_size - 5; j++)
 		{
-			size_t module_index = static_cast<size_t>(cmd.Module);
-			m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, byte_read - cmd_index, cmd.Code, iostream);
-			return true;
+			write_buffer[j] = cmd.Name[j];
 		}
-	}
 
-	return false;
+		write_buffer[j++] = ' ';
+		write_buffer[j++] = '-';
+		write_buffer[j++] = ' ';
+
+		for (size_t k = 0; k < cmd.Help.size() && j < write_buffer_size - 2; j++)
+		{
+			write_buffer[j] = cmd.Help[k++];
+		}
+
+		write_buffer[j++] = '\r';
+		write_buffer[j++] = '\n';
+
+		iostream->Write(write_buffer, j);
+		std::fill(write_buffer, write_buffer + write_buffer_size, 0);
+	}
 }
 
 size_t CommandParser::MaxCommands()
