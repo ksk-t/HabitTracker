@@ -62,7 +62,7 @@ void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const ch
 
 }
 
-size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font font, const char ch)
+size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font font, const char ch, size_t offset)
 {
 	uint32_t i, b, j;
 	Point_t curr_point{};
@@ -71,28 +71,27 @@ size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font f
 	if (ch < 32 || ch > 126)
 		return 0;
 
-	// Check remaining space on current line
-	if (m_display->GetWidth() < (point.X + font.Height) || m_display->GetHeight() < (point.Y + font.Height)) {
-		// Not enough space on current line
-		return 0;
-	}
-
 	// Use the font to write
 	Character font_char = font.GetChar(ch);
+	if (offset >= font_char.Width)
+	{
+		return font_char.Width;
+	}
+
 	for (i = 0; i < m_font->FontHeight; i++) {
 
 		b = font_char.Data[i];
 
-		for (j = 0; j < font_char.Width; j++) {
+		for (j = offset; j < font_char.Width; j++) {
 			if ((b << j) & 0x8000) {
-				curr_point.X = point.X + j;
-				curr_point.Y = point.Y + i; // the " + font.FontHeight - i" flips the character upside down
+				curr_point.X = point.X + j - offset;
 				m_display->DrawPixel(curr_point, color);
 			}
 		}
+		curr_point.Y++;
 	}
 
-	return font_char.Width;
+	return font_char.Width - offset;
 }
 
 void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
@@ -106,14 +105,21 @@ void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
 	}
 }
 
-void GraphicsEngine::DrawString(Point_t point, Color_t color, Font font, std::string str)
+void GraphicsEngine::DrawString(Point_t point, Color_t color, Font font, std::string str, size_t first_char_offset)
 {
    Point_t curr_point = point;
    const uint32_t characater_space = 1;
 
-	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
+   std::string::const_iterator iter = str.begin();
+   // Use offset on first character
+   if (iter != str.end())
+   {
+	   curr_point.X += this->DrawChar(curr_point, color, font,*iter, first_char_offset) + characater_space;
+	   iter++;
+   }
+
+	for (; iter != str.end(); iter++)
 	{
-		this->DrawChar(curr_point, color, font,*iter);
 		curr_point.X += this->DrawChar(curr_point, color, font,*iter) + characater_space;
 	}
 }

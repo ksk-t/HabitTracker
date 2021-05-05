@@ -19,20 +19,14 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
 
 void DisplayController::Draw()
 {
-   // Draw Clock
-  	BasicFont* font = &Font_6x8;
-	Point_t cursor{5, 0};
+	Point_t cursor{0, 0};
 
-	m_gfx_engine->SetFont(font);
-	m_gfx_engine->Fill(BasicColors::Black);
-
-//	// TEMP:Draw bounding box of LED matrix that will be used
-//	Point_t top_left{0, m_gfx_engine->GetDisplayHeight() - 19}; // Display time on top row
-//	m_gfx_engine->DrawBox(top_left, 34, 18, BasicColors::White, BasicColors::Black);
-//
 	// Draw clock on top row
 	Color_t color{1, 0, 0};
-	m_gfx_engine->DrawString(cursor, color,ClockFont ,m_rtc->GetTime().ToString(true));
+	size_t first_char_offset = 2;
+
+	m_gfx_engine->Fill(BasicColors::Black);
+	m_gfx_engine->DrawString(cursor, color,ClockFont ,m_rtc->GetTime().ToString(true), first_char_offset);
 
 	m_gfx_engine->Update();
 }
