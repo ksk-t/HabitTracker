@@ -31,9 +31,6 @@
 #include "Logger.h"
 #include "LoggerTask.h"
 #include "RealTimeClock.h"
-#include "GUIStateHabits.h"
-#include "GUIStateClock.h"
-#include "GUIControllerTask.h"
 #include "HabitManager.h"
 #include "RotaryEncoder.h"
 #include "StatusLED.h"
@@ -41,6 +38,10 @@
 #include "IOStreamUART.h"
 #include "CommandParser.h"
 #include "BasicTimer.h"
+#include "DisplayController.h"
+#include "Font.h"
+#include "WS2812.h"
+#include "WS2812Display.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,7 +67,9 @@ I2C_HandleTypeDef hi2c1;
 
 RTC_HandleTypeDef hrtc;
 
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+DMA_HandleTypeDef hdma_tim3_ch2;
 
 UART_HandleTypeDef huart3;
 
@@ -103,10 +106,12 @@ volatile bool resetHabitEvent = false;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM3_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -150,17 +155,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_TIM4_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize HAL
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
-
-  // Start shared resources
-  rtc.Initialize();
 
   /* USER CODE END 2 */
 
@@ -404,6 +408,65 @@ static void MX_RTC_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 75;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
   * @brief TIM4 Initialization Function
   * @param None
   * @retval None
@@ -482,6 +545,22 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 
 }
 
@@ -593,90 +672,18 @@ static void MX_GPIO_Init(void)
 void GUIControllerTaskThread(void *argument)
 {
 	SSD1306 ssd1306{&hi2c1};
-	GraphicsEngine gEngine{&ssd1306};
-	GUIControllerTask controller{};
+	WS2812 ledstrip{&htim3};
+	WS2812Display led_display{&ledstrip};
+	GraphicsEngine gEngine{&led_display};
 	HabitManager habit_manager{};
-	gEngine.Initialize();
-
-	// Setup GUI States
-	GUIStateHabits state_habits{&gEngine, &controller, &rtc, &habit_manager};
-	controller.AddState(&state_habits, GUIState::HABITS);
-	controller.SetState(GUIState::HABITS);
-
-	// Setup user inputs
-	Button select_btn{};
-	RotaryEncoder encoder{(uint16_t)TIM4->CNT};
-	const uint32_t TIMER_DIRECTION_MASK = 0b10000;
-	IOStreamUART uart_stream{&huart3};
-	uart_stream.TransmitStartChars();
-	uint8_t end_of_line = '\r';
-	uint8_t msg_invalid_cmd[] = "Invalid command";
-
-	// Register commands
-	CommandParser parser{};
-	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
-	Command_t cmd;
-	cmd.Code = HABIT_MANAGER_CMD_RESET;
-	cmd.Name = "resethabits";
-	cmd.Module = Module_t::HabitManager;
-	cmd.Help = "Reset all habits";
-	parser.RegisterCommand(cmd);
-	cmd.Code = HABIT_MANAGER_CMD_ADD_HABIT;
-	cmd.Name = "addhabit";
-	cmd.Module = Module_t::HabitManager;
-	cmd.Help = "Add habit";
-	parser.RegisterCommand(cmd);
-
-	// Setup refresh timer
-	BasicTimer gui_refresh_timer{};
-	gui_refresh_timer.Start(osKernelGetTickCount(), controller.RefreshInterval);
+	RealTimeClock rtc{&hrtc};
+	DisplayController display{&gEngine, &rtc, &habit_manager};
 
 	for(;;)
 	{
-		if (gui_refresh_timer.HasExpired(osKernelGetTickCount()))
-		{
-			controller.UIDraw();
-			gui_refresh_timer.Start(osKernelGetTickCount(), controller.RefreshInterval);
-		}
+		display.Draw();
 
-		if (resetHabitEvent)
-		{
-			habit_manager.Reset();
-			controller.UIDraw();
-			resetHabitEvent = false;
-		}
-
-		if (select_btn.IsPressed(HAL_GPIO_ReadPin(BUTTON_SELECT_GPIO_Port, BUTTON_SELECT_Pin) == GPIO_PIN_SET))
-		{
-			controller.UISelect();
-		}
-
-		if (encoder.HasMoved(TIM4->CNT))
-		{
-			if (TIM4->CR1 & TIMER_DIRECTION_MASK)
-			{
-				controller.UILeft();
-			}else
-			{
-				controller.UIRight();
-			}
-		}
-
-		size_t bytes_available = 0;
-		if ((bytes_available = uart_stream.BytesAvailable()))
-		{
-         uint8_t last_char = 0;
-         if ((uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line) || uart_stream.IsRxBufferFull())
-         {
-            if (false == parser.Execute(&uart_stream))
-            {
-            	uart_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
-            }
-            uart_stream.TransmitStartChars();
-         }
-		}
-
-		osDelay(10);
+		osDelay(250);
 	}
 }
 

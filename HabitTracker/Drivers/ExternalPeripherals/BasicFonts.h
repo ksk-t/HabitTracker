@@ -16,8 +16,9 @@ struct BasicFont{
 	const uint16_t *data; /*!< Pointer to data font data array */
 };
 
-#define SSD1306_INCLUDE_FONT_11x18
+#define SSD1306_INCLUDE_FONT_6x8
 #define SSD1306_INCLUDE_FONT_7x10
+#define SSD1306_INCLUDE_FONT_11x18
 #define SSD1306_INCLUDE_FONT_16x26
 
 #ifdef SSD1306_INCLUDE_FONT_6x8

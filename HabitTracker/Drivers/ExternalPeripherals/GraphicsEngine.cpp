@@ -29,7 +29,7 @@ void GraphicsEngine::Initialize()
 {
 	if (Status_t::OK != m_display->Initialize())
 	{
-		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "Failed to initialize";
+		Logger(LoggingLevel::Error, MODULE_NAME).Get() << "Failed to initialize display";
 	}
 }
 
@@ -62,6 +62,39 @@ void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const ch
 
 }
 
+size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font font, const char ch)
+{
+	uint32_t i, b, j;
+	Point_t curr_point{};
+
+	// Check if character is valid
+	if (ch < 32 || ch > 126)
+		return 0;
+
+	// Check remaining space on current line
+	if (m_display->GetWidth() < (point.X + font.Height) || m_display->GetHeight() < (point.Y + font.Height)) {
+		// Not enough space on current line
+		return 0;
+	}
+
+	// Use the font to write
+	Character font_char = font.GetChar(ch);
+	for (i = 0; i < m_font->FontHeight; i++) {
+
+		b = font_char.Data[i];
+
+		for (j = 0; j < font_char.Width; j++) {
+			if ((b << j) & 0x8000) {
+				curr_point.X = point.X + j;
+				curr_point.Y = point.Y + i; // the " + font.FontHeight - i" flips the character upside down
+				m_display->DrawPixel(curr_point, color);
+			}
+		}
+	}
+
+	return font_char.Width;
+}
+
 void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
 {
    Point_t curr_point = point;
@@ -72,6 +105,19 @@ void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
 		curr_point.X += m_font->FontWidth;
 	}
 }
+
+void GraphicsEngine::DrawString(Point_t point, Color_t color, Font font, std::string str)
+{
+   Point_t curr_point = point;
+   const uint32_t characater_space = 1;
+
+	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
+	{
+		this->DrawChar(curr_point, color, font,*iter);
+		curr_point.X += this->DrawChar(curr_point, color, font,*iter) + characater_space;
+	}
+}
+
 
 void GraphicsEngine::DrawStringWrap(Point_t point, Color_t color, std::string string)
 {

@@ -25,9 +25,9 @@ std::string Time_t::ToString(bool toggle_colon) {
 	}
 	ret_str += std::to_string(Minutes);
 	if (TimeFormat == TimeFormat_t::Format_12_AM) {
-		ret_str += "AM";
+		ret_str += "A";
 	} else {
-		ret_str += "PM";
+		ret_str += "P";
 	}
 
 	return ret_str;

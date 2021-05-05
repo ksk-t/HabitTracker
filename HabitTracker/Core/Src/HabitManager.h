@@ -8,28 +8,61 @@
 #ifndef SRC_HABITMANAGER_H_
 #define SRC_HABITMANAGER_H_
 
-#include "Habit.h"
-#include "CommandCallableBase.h"
 #include <array>
 
 // Command Codes
 #define HABIT_MANAGER_CMD_RESET 0
 #define HABIT_MANAGER_CMD_ADD_HABIT 1
 
-class HabitManager : public CommandCallableBase
+// Constants
+constexpr size_t MAX_RECORD_DAYS = 31;
+constexpr size_t MAX_NUM_HABITS = 10;
+
+class HabitManager
 {
 public:
-   bool AddHabit(Habit_t habit);
-   bool GetHabit(size_t index, Habit_t &habit);
-   bool ToggleHabit(size_t index);
-   void Reset();
-   size_t Count();
-   size_t MaxCount();
 
-   cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream);
+	HabitManager();
+
+	/*
+	 * Return completion status of a habit on a given day
+	 *
+	 * @param id ID number of the habit to get the completion status of
+	 * @param day Day to get the completion status of
+	 *
+	 * @return True if habit was complete, false otherwise
+	 */
+     bool GetHabitStatus(size_t id, uint8_t day);
+
+   /*
+    * Toggles the completion status of a habit
+    *
+    * @param id ID number of the habit to toggle
+    * @param day Day to toggle
+    *
+    * @param Return true on success, false otherwise
+    */
+   bool ToggleHabit(size_t index, uint8_t day);
+
+   /*
+    * Resets all habits to incomplete
+    */
+   void Reset();
+
+   /*
+    * Returns the habit count
+    *
+    * @Return Number of habits
+    */
+   size_t Count() { return MAX_NUM_HABITS; };
+
+   /*
+    * Gets the number of completion status recorded per habit
+    */
+   size_t RecordLength() { return MAX_RECORD_DAYS; };
+
 private:
-   std::array<Habit_t, 10> m_habits;
-   size_t m_count{0};
+   std::array<std::array<bool, MAX_RECORD_DAYS>, MAX_NUM_HABITS> m_habits;
 };
 
 
