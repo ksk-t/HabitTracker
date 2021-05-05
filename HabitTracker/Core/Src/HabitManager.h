@@ -42,7 +42,7 @@ public:
     *
     * @param Return true on success, false otherwise
     */
-   bool ToggleHabit(size_t index, uint8_t day);
+   bool ToggleHabit(size_t id, uint8_t day);
 
    /*
     * Resets all habits to incomplete

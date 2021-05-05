@@ -8,18 +8,32 @@ Status_t WS2812Display::Initialize()
 Status_t WS2812Display::DrawPixel(Point_t point, Color_t color)
 {
    uint32_t pixel_index = 0;
-   if (point.Y >= HEIGHT || point.X >= WIDTH)
+   if (point.Y >= 16 || point.X >= WIDTH)
    {
       return Status_t::ERROR;
    }
 
-   if (point.X % 2)
+   if (point.Y < 8)
    {
-	   pixel_index = point.X * HEIGHT + (HEIGHT - point.Y - 1);
+	   if (point.X % 2)
+	   {
+		   pixel_index = point.X * 8 + (8 - point.Y - 1);
+	   }else
+	   {
+		   pixel_index = point.X * 8 + point.Y;
+	   }
    }else
    {
-	   pixel_index = point.X * HEIGHT + point.Y;
+	   pixel_index = 256;
+	   if (point.X % 2)
+	   {
+		   pixel_index += point.X * 8 + (8 - (point.Y - 8) - 1);
+	   }else
+	   {
+		   pixel_index += point.X * 8 + point.Y - 8;
+	   }
    }
+
    
    m_led_strip->SetColor(pixel_index, color);
 

@@ -23,9 +23,15 @@ bool HabitManager::GetHabitStatus(size_t id, uint8_t day)
 	}
 }
 
-bool HabitManager::ToggleHabit(size_t index, uint8_t day)
+bool HabitManager::ToggleHabit(size_t id, uint8_t day)
 {
-	return true;
+	if (id < MAX_NUM_HABITS && day < MAX_RECORD_DAYS)
+	{
+		m_habits[id][day] = !m_habits[id][day];
+	}else
+	{
+		return false;
+	}
 }
 
 void HabitManager::Reset()

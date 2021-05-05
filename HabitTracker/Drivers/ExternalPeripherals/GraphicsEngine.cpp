@@ -65,7 +65,7 @@ void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const ch
 size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font font, const char ch, size_t offset)
 {
 	uint32_t i, b, j;
-	Point_t curr_point{};
+	Point_t curr_point{point.X, point.Y};
 
 	// Check if character is valid
 	if (ch < 32 || ch > 126)

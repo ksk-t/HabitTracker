@@ -19,13 +19,24 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
 
 void DisplayController::Draw()
 {
-	Point_t cursor{0, 0};
+	Point_t cursor{0, 5};
 
 	// Draw clock on top row
 	Color_t color{1, 0, 0};
-	size_t first_char_offset = 2;
+	size_t first_char_offset = 0;
 
 	m_gfx_engine->Fill(BasicColors::Black);
+
+	Time_t current_time = m_rtc->GetTime();
+	if (current_time.Hours >= 10 && current_time.Hours <= 19)
+	{
+		first_char_offset = 2;
+		cursor.X = 0;
+	}else
+	{
+		first_char_offset = 0;
+		cursor.X = 2;
+	}
 	m_gfx_engine->DrawString(cursor, color,ClockFont ,m_rtc->GetTime().ToString(true), first_char_offset);
 
 	m_gfx_engine->Update();

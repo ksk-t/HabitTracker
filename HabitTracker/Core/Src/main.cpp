@@ -671,7 +671,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void GUIControllerTaskThread(void *argument)
 {
-	SSD1306 ssd1306{&hi2c1};
 	WS2812 ledstrip{&htim3};
 	WS2812Display led_display{&ledstrip};
 	GraphicsEngine gEngine{&led_display};
@@ -681,9 +680,20 @@ void GUIControllerTaskThread(void *argument)
 
 	for(;;)
 	{
-		display.Draw();
+		for (size_t i = 0; i < 16; i++)
+		{
+			for (size_t j = 0; j < 32; j++)
+			{
+				Point_t point{j, i};
+				Color_t color{1,0,0};
+				gEngine.Fill(BasicColors::Black);
+				led_display.DrawPixel(point,color);
+				led_display.Update();
+				osDelay(50);
+			}
+		}
 
-		osDelay(250);
+
 	}
 }
 

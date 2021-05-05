@@ -23,7 +23,7 @@ public:
 private:
 	WS2812* m_led_strip;
 
-   const static uint32_t HEIGHT = 8;
+   const static uint32_t HEIGHT = 16;
    const static uint32_t WIDTH = 32;
 };
 

@@ -11,9 +11,6 @@
 std::string Time_t::ToString(bool toggle_colon) {
 	std::string ret_str = "";
 
-	if (Hours < 10) {
-		ret_str += "0";
-	}
 	ret_str += std::to_string(Hours);
 	if (toggle_colon && Seconds % 2 == 1) {
 		ret_str += " ";
