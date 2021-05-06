@@ -21,6 +21,7 @@ public:
 	void Fill();
 	void Update();
 	void InvertRegion();
+	void DrawPixel(const Point_t point, const Color_t color);
 	void DrawChar(const Point_t point, const Color_t, const char ch);
 	size_t DrawChar(const Point_t point, const Color_t, Font font, const char ch, size_t offset = 0);
 	void SetFont(BasicFont* font);

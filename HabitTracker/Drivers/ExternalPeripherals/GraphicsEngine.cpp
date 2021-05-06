@@ -33,6 +33,11 @@ void GraphicsEngine::Initialize()
 	}
 }
 
+void GraphicsEngine::DrawPixel(const Point_t point, const Color_t color)
+{
+	m_display->DrawPixel(point, color);
+}
+
 void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch)
 {
 	uint32_t i, b, j;

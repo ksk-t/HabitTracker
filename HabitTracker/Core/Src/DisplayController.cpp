@@ -15,11 +15,22 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
 
    m_gfx_engine->Initialize();
    rtc->Initialize();
+
+   m_habit_manager->ToggleHabit(0, 12);
+   m_habit_manager->ToggleHabit(0, 13);
+   m_habit_manager->ToggleHabit(0, 1);
+   m_habit_manager->ToggleHabit(0, 4);
+   m_habit_manager->ToggleHabit(2, 5);
+   m_habit_manager->ToggleHabit(2, 1);
+   m_habit_manager->ToggleHabit(2, 2);
+   m_habit_manager->ToggleHabit(3, 30);
+   m_habit_manager->ToggleHabit(3, 31);
+   m_habit_manager->ToggleHabit(3, 29);
 }
 
 void DisplayController::Draw()
 {
-	Point_t cursor{0, 5};
+	Point_t cursor{0, 0};
 
 	// Draw clock on top row
 	Color_t color{1, 0, 0};
@@ -38,6 +49,22 @@ void DisplayController::Draw()
 		cursor.X = 2;
 	}
 	m_gfx_engine->DrawString(cursor, color,ClockFont ,m_rtc->GetTime().ToString(true), first_char_offset);
+
+	// Draw habits
+	cursor.X = 0;
+	cursor.Y = 8;
+	for (size_t i = 0; i < m_habit_manager->Count(); i++)
+	{
+		for (size_t j = 0; j < m_habit_manager->RecordLength(); j++)
+		{
+			if (m_habit_manager->GetHabitStatus(i, j))
+			{
+				cursor.X = j;
+				m_gfx_engine->DrawPixel(cursor, color);
+			}
+		}
+		cursor.Y++;
+	}
 
 	m_gfx_engine->Update();
 }

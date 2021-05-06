@@ -115,11 +115,43 @@
                         					
                     </folderInfo>
                     					
+                    <folderInfo id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1693640191.1678148277" name="/" resourcePath="SrcApp">
+                        						
+                        <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.136716593" name="Cygwin GCC" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug" unusedChildren="">
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.2020607948" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.483080011">
+                                								
+                                <inputType id="cdt.managedbuild.tool.gnu.assembler.input.458689228" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.archiver.cygwin.base.726159935" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.cygwin.base.1953599620"/>
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.323632220" name="Cygwin C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.37282459">
+                                								
+                                <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.190016916" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1594794360" name="Cygwin C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1930448937">
+                                								
+                                <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.1938681444" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
+                                							
+                            </tool>
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.285722186" name="Cygwin C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1823651690"/>
+                            							
+                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.943375113" name="Cygwin C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.99533550"/>
+                            						
+                        </toolChain>
+                        					
+                    </folderInfo>
+                    					
                     <sourceEntries>
                         						
-                        <entry excluding="BasicFonts.cpp|BasicFonts.h|Color.h|Display.h|GraphicsEngine.cpp|GraphicsEngine.h|Point.h|SSD1306.cpp|SSD1306.h|RealTimeClock.cpp|Date.h|RealTimeClock.h|RealTimeClockUtilities.h|RealTimeClockUtilties.cpp|Status.h|IOStreamUART.cpp|IOStreamUART.h" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ExternalPeripherals"/>
+                        <entry excluding="BasicFonts.cpp|BasicFonts.h|Color.h|Display.h|GraphicsEngine.cpp|GraphicsEngine.h|Point.h|SSD1306.cpp|SSD1306.h|RealTimeClock.cpp|Date.h|RealTimeClock.h|RealTimeClockUtilities.h|RealTimeClockUtilties.cpp|Status.h|IOStreamUART.cpp|IOStreamUART.h|WS2812.cpp|WS2812.h|WS2812Display.cpp|WS2812Display.h" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="ExternalPeripherals"/>
                         						
-                        <entry excluding="freertos.c|GUIControllerTask.cpp|GUIControllerTask.h|GUIStateBase.h|GUIStateClock.cpp|GUIStateClock.h|GUIStateHabits.cpp|GUIStateHabits.h|Habit.cpp|Habit.h|Logger.cpp|Logger.h|LoggerTask.cpp|LoggerTask.h|main.cpp|StatusLED.cpp|StatusLED.h|stm32f2xx_hal_msp.c|stm32f2xx_hal_timebase_tim.c|stm32f2xx_it.c|syscalls.c|sysmem.c|system_stm32f2xx.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="SrcApp"/>
+                        <entry excluding="freertos.c|GUIControllerTask.cpp|GUIControllerTask.h|GUIStateBase.h|GUIStateClock.cpp|GUIStateClock.h|GUIStateHabits.cpp|GUIStateHabits.h|Habit.cpp|Habit.h|Logger.cpp|Logger.h|LoggerTask.cpp|LoggerTask.h|main.cpp|StatusLED.cpp|StatusLED.h|stm32f2xx_hal_msp.c|stm32f2xx_hal_timebase_tim.c|stm32f2xx_it.c|syscalls.c|sysmem.c|system_stm32f2xx.c|DisplayController.cpp|DisplayController.h" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="SrcApp"/>
                         						
                         <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Utilities"/>
                         						

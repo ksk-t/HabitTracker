@@ -40,7 +40,7 @@ TEST(TimeTests, to_string_test_no_colon_toggle)
    time.Hours = 4;
    time.Minutes = 32;
    time.TimeFormat = TimeFormat_t::Format_12_PM;
-	STRCMP_EQUAL("04:32PM", time.ToString().c_str());
+	STRCMP_EQUAL("4:32PM", time.ToString().c_str());
 }
 
 TEST(TimeTests, to_string_test_colon_toggle)

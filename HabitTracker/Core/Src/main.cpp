@@ -680,20 +680,7 @@ void GUIControllerTaskThread(void *argument)
 
 	for(;;)
 	{
-		for (size_t i = 0; i < 16; i++)
-		{
-			for (size_t j = 0; j < 32; j++)
-			{
-				Point_t point{j, i};
-				Color_t color{1,0,0};
-				gEngine.Fill(BasicColors::Black);
-				led_display.DrawPixel(point,color);
-				led_display.Update();
-				osDelay(50);
-			}
-		}
-
-
+		display.Draw();
 	}
 }
 
