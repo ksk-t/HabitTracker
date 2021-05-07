@@ -39,6 +39,7 @@ struct Time_t
    DayLightSaving_t DayLightSaving{DayLightSaving_t::None};
    StoreOperation_t StoreOperation{StoreOperation_t::Reset};
    std::string ToString(bool toggle_colon = false);
+   bool FromString(std::string str);
 };
 
 #endif /* EXTERNALPERIPHERALS_TIME_H_ */
