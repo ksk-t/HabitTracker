@@ -14,7 +14,7 @@ const static std::string MODULE_NAME = "GraphicsEngine";
 GraphicsEngine::GraphicsEngine(Display* display) :
 	m_display(display)
 {
-	m_font = &Font_7x10;
+	m_font = &ClockFont;
 }
 
 void GraphicsEngine::Update()
@@ -38,36 +38,7 @@ void GraphicsEngine::DrawPixel(const Point_t point, const Color_t color)
 	m_display->DrawPixel(point, color);
 }
 
-void GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch)
-{
-	uint32_t i, b, j;
-	Point_t curr_point{};
-
-	// Check if character is valid
-	if (ch < 32 || ch > 126)
-		return;
-
-	// Check remaining space on current line
-	if (m_display->GetWidth() < (point.X + m_font->FontWidth) || m_display->GetHeight() < (point.Y + m_font->FontHeight)) {
-		// Not enough space on current line
-		return;
-	}
-
-	// Use the font to write
-	for (i = 0; i < m_font->FontHeight; i++) {
-		b = m_font->data[(ch - 32) * m_font->FontHeight + i];
-		for (j = 0; j < m_font->FontWidth; j++) {
-			if ((b << j) & 0x8000) {
-				curr_point.X = point.X + j;
-				curr_point.Y = point.Y + m_font->FontHeight - i; // the " + font.FontHeight - i" flips the character upside down
-				m_display->DrawPixel(curr_point, color);
-			}
-		}
-	}
-
-}
-
-size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font font, const char ch, size_t offset)
+size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch, size_t offset)
 {
 	uint32_t i, b, j;
 	Point_t curr_point{point.X, point.Y};
@@ -77,13 +48,13 @@ size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font f
 		return 0;
 
 	// Use the font to write
-	Character font_char = font.GetChar(ch);
+	Character font_char = m_font->GetChar(ch);
 	if (offset >= font_char.Width)
 	{
 		return font_char.Width;
 	}
 
-	for (i = 0; i < m_font->FontHeight; i++) {
+	for (i = 0; i < m_font->Height; i++) {
 
 		b = font_char.Data[i];
 
@@ -99,18 +70,7 @@ size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, Font f
 	return font_char.Width - offset;
 }
 
-void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str)
-{
-   Point_t curr_point = point;
-
-	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
-	{
-		this->DrawChar(curr_point, color, *iter);
-		curr_point.X += m_font->FontWidth;
-	}
-}
-
-void GraphicsEngine::DrawString(Point_t point, Color_t color, Font font, std::string str, size_t first_char_offset)
+void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str, size_t first_char_offset)
 {
    Point_t curr_point = point;
    const uint32_t characater_space = 1;
@@ -119,34 +79,13 @@ void GraphicsEngine::DrawString(Point_t point, Color_t color, Font font, std::st
    // Use offset on first character
    if (iter != str.end())
    {
-	   curr_point.X += this->DrawChar(curr_point, color, font,*iter, first_char_offset) + characater_space;
+	   curr_point.X += this->DrawChar(curr_point, color, *iter, first_char_offset) + characater_space;
 	   iter++;
    }
 
 	for (; iter != str.end(); iter++)
 	{
-		curr_point.X += this->DrawChar(curr_point, color, font,*iter) + characater_space;
-	}
-}
-
-
-void GraphicsEngine::DrawStringWrap(Point_t point, Color_t color, std::string string)
-{
-	if (string.length() == 0) {
-		return;
-	}
-
-	const size_t max_lines = 10;
-	std::string lines[max_lines];
-
-	size_t num_lines = GraphicsUtilities::WrapText(string, lines, max_lines, m_font->FontWidth, m_display->GetWidth() - point.X);
-	if (num_lines == 0) {
-		return;
-	}
-
-	for (size_t i = 0; i < num_lines; i++) {
-		this->DrawString(point, color, lines[i]);
-		point.Y -= m_font->FontHeight;
+		curr_point.X += this->DrawChar(curr_point, color, *iter) + characater_space;
 	}
 }
 
@@ -188,7 +127,7 @@ void GraphicsEngine::Fill(const Color_t color)
 	}
 }
 
-void GraphicsEngine::SetFont(BasicFont* font)
+void GraphicsEngine::SetFont(Font* font)
 {
 	m_font = font;
 }

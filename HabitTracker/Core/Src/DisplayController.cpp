@@ -48,7 +48,7 @@ void DisplayController::Draw()
 		first_char_offset = 0;
 		cursor.X = 2;
 	}
-	m_gfx_engine->DrawString(cursor, color,ClockFont ,m_rtc->GetTime().ToString(true), first_char_offset);
+	m_gfx_engine->DrawString(cursor, color ,m_rtc->GetTime().ToString(true), first_char_offset);
 
 	// Draw habits
 	cursor.X = 0;

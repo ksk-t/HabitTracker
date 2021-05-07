@@ -23,11 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Color.h"
-#include "SSD1306.h"
 #include "Display.h"
 #include "GraphicsEngine.h"
-#include "BasicFonts.h"
 #include "Logger.h"
 #include "LoggerTask.h"
 #include "RealTimeClock.h"
@@ -39,8 +36,6 @@
 #include "CommandParser.h"
 #include "BasicTimer.h"
 #include "DisplayController.h"
-#include "Font.h"
-#include "WS2812.h"
 #include "WS2812Display.h"
 /* USER CODE END Includes */
 
