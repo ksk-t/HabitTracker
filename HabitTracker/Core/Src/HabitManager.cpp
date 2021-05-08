@@ -44,3 +44,21 @@ void HabitManager::Reset()
 		}
 	}
 }
+
+cmd_status_t HabitManager::CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream)
+{
+	switch(code)
+	{
+	case HABIT_MANAGER_CMD_RESET:
+	{
+		Reset();
+		uint8_t msg[] = "Habit manager has been reset";
+		iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+		break;
+	}
+	default:
+		return cmd_status_t::InvalidCode;
+	}
+
+	return cmd_status_t::Ok;
+}

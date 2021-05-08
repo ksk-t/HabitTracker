@@ -9,16 +9,16 @@
 #define SRC_HABITMANAGER_H_
 
 #include <array>
+#include "CommandCallableBase.h"
 
 // Command Codes
 #define HABIT_MANAGER_CMD_RESET 0
-#define HABIT_MANAGER_CMD_ADD_HABIT 1
 
 // Constants
-constexpr size_t MAX_RECORD_DAYS = 31;
+constexpr size_t MAX_RECORD_DAYS = 32;
 constexpr size_t MAX_NUM_HABITS = 10;
 
-class HabitManager
+class HabitManager : public CommandCallableBase
 {
 public:
 
@@ -60,6 +60,8 @@ public:
     * Gets the number of completion status recorded per habit
     */
    size_t RecordLength() { return MAX_RECORD_DAYS; };
+
+   cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream);
 
 private:
    std::array<std::array<bool, MAX_RECORD_DAYS>, MAX_NUM_HABITS> m_habits;

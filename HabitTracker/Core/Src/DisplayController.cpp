@@ -16,16 +16,13 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
    m_gfx_engine->Initialize();
    rtc->Initialize();
 
-   m_habit_manager->ToggleHabit(0, 12);
-   m_habit_manager->ToggleHabit(0, 13);
-   m_habit_manager->ToggleHabit(0, 1);
-   m_habit_manager->ToggleHabit(0, 4);
-   m_habit_manager->ToggleHabit(2, 5);
-   m_habit_manager->ToggleHabit(2, 1);
-   m_habit_manager->ToggleHabit(2, 2);
-   m_habit_manager->ToggleHabit(3, 30);
-   m_habit_manager->ToggleHabit(3, 31);
-   m_habit_manager->ToggleHabit(3, 29);
+   for (size_t i = 0; i < 8; i++)
+   {
+	   for (size_t j = 0; j < 32; j++)
+	   {
+		   m_habit_manager->ToggleHabit(i, j);
+	   }
+   }
 }
 
 void DisplayController::Draw()
@@ -53,6 +50,10 @@ void DisplayController::Draw()
 	// Draw habits
 	cursor.X = 0;
 	cursor.Y = 8;
+	color.B = 7;
+	color.R = 0;
+	color.G = 0;
+
 	for (size_t i = 0; i < m_habit_manager->Count(); i++)
 	{
 		for (size_t j = 0; j < m_habit_manager->RecordLength(); j++)
@@ -63,6 +64,8 @@ void DisplayController::Draw()
 				m_gfx_engine->DrawPixel(cursor, color);
 			}
 		}
+		color.B--;
+		color.R++;
 		cursor.Y++;
 	}
 

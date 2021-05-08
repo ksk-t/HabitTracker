@@ -672,10 +672,44 @@ void GUIControllerTaskThread(void *argument)
 	HabitManager habit_manager{};
 	RealTimeClock rtc{&hrtc};
 	DisplayController display{&gEngine, &rtc, &habit_manager};
+	IOStreamUART uart_stream{&huart3};
+	CommandParser parser{};
+
+	// Initialize modules
+	uart_stream.TransmitStartChars();
+
+	// Register Commands
+	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
+	Command_t cmd;
+	cmd.Module = Module_t::RealTimeClock;
+	cmd.Name = "settime";
+	cmd.Help = "Set the time. Format: dd:dd<AM/PM>";
+	cmd.Code = TIME_CMD_SET_TIME;
+	parser.RegisterCommand(cmd);
 
 	for(;;)
 	{
+		// Check UART stream for input
+		size_t bytes_available = 0;
+		if ((bytes_available = uart_stream.BytesAvailable()))
+		{
+			uint8_t last_char = 0;
+			uint8_t end_of_line = '\r';
+
+			if ((uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line) || uart_stream.IsRxBufferFull())
+			{
+				if (false == parser.Execute(&uart_stream))
+				{
+					uint8_t msg_invalid_cmd[] = "Invalid command";
+					uart_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
+				}
+				uart_stream.TransmitStartChars();
+			}
+        }
+
 		display.Draw();
+
+		osDelay(200);
 	}
 }
 
