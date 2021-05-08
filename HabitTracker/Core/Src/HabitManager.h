@@ -13,6 +13,7 @@
 
 // Command Codes
 #define HABIT_MANAGER_CMD_RESET 0
+#define HABIT_MANAGER_CMD_TOGGLE 1
 
 // Constants
 constexpr size_t MAX_RECORD_DAYS = 32;
@@ -40,10 +41,18 @@ public:
     * @param id ID number of the habit to toggle
     * @param day Day to toggle
     *
-    * @param Return true on success, false otherwise
+    * @return Return true on success, false otherwise
     */
    bool ToggleHabit(size_t id, uint8_t day);
 
+   /*
+    * Toggles completion status of a habit identified by a string
+    *
+    * @param habit Habit identity as a string. Format: "<ID>,<DAY>"
+    *
+    * @return Returns true on success, false otherswise
+    */
+   bool ToggleHabit(std::string habit);
    /*
     * Resets all habits to incomplete
     */
@@ -52,12 +61,14 @@ public:
    /*
     * Returns the habit count
     *
-    * @Return Number of habits
+    * @return Number of habits
     */
    size_t Count() { return MAX_NUM_HABITS; };
 
    /*
     * Gets the number of completion status recorded per habit
+    *
+    * @return Number of days recorded per habit
     */
    size_t RecordLength() { return MAX_RECORD_DAYS; };
 

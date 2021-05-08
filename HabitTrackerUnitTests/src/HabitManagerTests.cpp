@@ -44,5 +44,27 @@ TEST(HabitManagerTests, toggle_habit)
 	manager->ToggleHabit(2, 3);
 	CHECK_FALSE(manager->GetHabitStatus(2, 3));
 	manager->ToggleHabit(2, 3);
-
 }
+
+TEST(HabitManagerTests, toggle_habit_string)
+{
+	CHECK_FALSE(manager->GetHabitStatus(2, 3));
+	manager->ToggleHabit("2,3");
+	CHECK(manager->GetHabitStatus(2, 3));
+
+	CHECK_FALSE(manager->GetHabitStatus(4, 5));
+	manager->ToggleHabit("4,5");
+	CHECK(manager->GetHabitStatus(4, 5));
+}
+
+
+TEST(HabitManagerTests, toggle_habit_string_invalid)
+{
+	CHECK_FALSE(manager->ToggleHabit("fa,afea"));
+	CHECK_FALSE(manager->ToggleHabit("3,afea"));
+	CHECK_FALSE(manager->ToggleHabit("10,0"));
+	CHECK_FALSE(manager->ToggleHabit("0,40"));
+}
+
+
+

@@ -680,11 +680,17 @@ void GUIControllerTaskThread(void *argument)
 
 	// Register Commands
 	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
+	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
 	Command_t cmd;
 	cmd.Module = Module_t::RealTimeClock;
 	cmd.Name = "settime";
 	cmd.Help = "Set the time. Format: dd:dd<AM/PM>";
 	cmd.Code = TIME_CMD_SET_TIME;
+	parser.RegisterCommand(cmd);
+	cmd.Module = Module_t::HabitManager;
+	cmd.Name = "togglehabit";
+	cmd.Help = "Toggles a habit. Format <ID>,<DAY>";
+	cmd.Code = HABIT_MANAGER_CMD_TOGGLE;
 	parser.RegisterCommand(cmd);
 
 	for(;;)
