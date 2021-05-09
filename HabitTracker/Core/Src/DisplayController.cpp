@@ -30,7 +30,7 @@ void DisplayController::Draw()
 	Point_t cursor{0, 0};
 
 	// Draw clock on top row
-	Color_t color{1, 0, 0};
+	Color_t color{20, 0, 0};
 	size_t first_char_offset = 0;
 
 	m_gfx_engine->Fill(BasicColors::Black);
@@ -50,7 +50,7 @@ void DisplayController::Draw()
 	// Draw habits
 	cursor.X = 0;
 	cursor.Y = 8;
-	color.B = 7;
+	color.B = 14;
 	color.R = 0;
 	color.G = 0;
 
@@ -62,10 +62,12 @@ void DisplayController::Draw()
 			{
 				cursor.X = j;
 				m_gfx_engine->DrawPixel(cursor, color);
+				color.R++;
 			}
 		}
-		color.B--;
-		color.R++;
+		color.B -= 2;
+		color.G += 2;
+		color.R= 0;
 		cursor.Y++;
 	}
 

@@ -94,16 +94,24 @@ cmd_status_t HabitManager::CommandCallback(uint8_t* buffer, size_t size, uint32_
 	}
 	case HABIT_MANAGER_CMD_TOGGLE:
 	{
-		std::string str((char*)buffer, size - 1); // - 1 to remove \r
-		if (ToggleHabit(str))
+		if (size > 0)
 		{
-			uint8_t msg[] = "Habit toggled";
-			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			std::string str((char*)buffer, size - 1); // - 1 to remove \r
+			if (ToggleHabit(str))
+			{
+				uint8_t msg[] = "Habit toggled";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}else
+			{
+				uint8_t msg[] = "Invalid habit";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}
 		}else
 		{
-			uint8_t msg[] = "Invalid habit";
+			uint8_t msg[] = "ERROR: Empty parameter list";
 			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
 		}
+
 	}
 	default:
 		return cmd_status_t::InvalidCode;
