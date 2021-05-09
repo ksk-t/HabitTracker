@@ -107,16 +107,19 @@ cmd_status_t DisplayController::CommandCallback(uint8_t* buffer, size_t size, ui
 				SetBrightness(std::stoi(brightness));
 				uint8_t msg[] = "Brightness set";
 				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+				return cmd_status_t::Ok;
 			}else
 			{
-				uint8_t msg[] = "Invalid brightness value";
+				uint8_t msg[] = "ERROR: Invalid brightness value";
 				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+				return cmd_status_t::InvalidParamter;
 			}
 
 		}else
 		{
 			uint8_t msg[] = "ERROR: Empty parameter list";
 			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			return cmd_status_t::InvalidParamter;
 		}
 
 		break;
@@ -124,6 +127,4 @@ cmd_status_t DisplayController::CommandCallback(uint8_t* buffer, size_t size, ui
 	default:
 		return cmd_status_t::InvalidCode;
 	}
-
-	return cmd_status_t::Ok;
 }

@@ -145,6 +145,7 @@ cmd_status_t RealTimeClock::CommandCallback(uint8_t* buffer, size_t size, uint32
 		{
 			uint8_t msg[] = "ERROR: Invalid time format";
 			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			return cmd_status_t::InvalidParamter;
 		}
 
 	}

@@ -15,7 +15,8 @@
 enum class cmd_status_t
 {
 	Ok,
-	InvalidCode
+	InvalidCode,
+	InvalidParamter
 };
 
 class CommandCallableBase
