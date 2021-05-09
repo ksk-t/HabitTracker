@@ -79,6 +79,13 @@ void CommandParser::PrintHelp(IOStreamBase* iostream)
 {
 	const size_t write_buffer_size = 128;
 	uint8_t write_buffer[write_buffer_size] = {0};
+	size_t len_longest_cmd_name = 0;
+	for (size_t i = 0; i < m_num_commands;i++)
+	{
+		Command_t cmd = m_commands[i];
+		len_longest_cmd_name = std::max(len_longest_cmd_name, cmd.Name.length());
+	}
+
 	for (size_t i = 0; i < m_num_commands;i++)
 	{
 		Command_t cmd = m_commands[i];
@@ -86,6 +93,10 @@ void CommandParser::PrintHelp(IOStreamBase* iostream)
 		for (; j < cmd.Name.size() && j < write_buffer_size - 5; j++)
 		{
 			write_buffer[j] = cmd.Name[j];
+		}
+		for (; j < len_longest_cmd_name && j < write_buffer_size - 5; j++)
+		{
+			write_buffer[j] = ' ';
 		}
 
 		write_buffer[j++] = ' ';
