@@ -50,42 +50,46 @@ void DisplayController::Draw()
 	m_gfx_engine->Fill(BasicColors::Black);
 
 	Time_t current_time = m_rtc->GetTime();
-	if (current_time.Hours >= 10 && current_time.Hours <= 19)
+	if (current_time != m_last_time)
 	{
-		first_char_offset = 2;
-		cursor.X = 0;
-	}else
-	{
-		first_char_offset = 0;
-		cursor.X = 2;
-	}
-	m_gfx_engine->DrawString(cursor, color ,m_rtc->GetTime().ToString(true), first_char_offset);
-
-	// Draw habits
-	cursor.X = 0;
-	cursor.Y = 8;
-	color.B = (m_habit_manager->Count() - 1) * m_brightness;
-	color.R = 0;
-	color.G = 0;
-
-	for (size_t i = 0; i < m_habit_manager->Count(); i++)
-	{
-		for (size_t j = 0; j < m_habit_manager->RecordLength(); j++)
+		m_last_time = current_time;
+		if (current_time.Hours >= 10 && current_time.Hours <= 19)
 		{
-			if (m_habit_manager->GetHabitStatus(i, j))
-			{
-				cursor.X = j;
-				m_gfx_engine->DrawPixel(cursor, color);
-				color.R += m_brightness;
-			}
+			first_char_offset = 2;
+			cursor.X = 0;
+		}else
+		{
+			first_char_offset = 0;
+			cursor.X = 2;
 		}
-		color.B -= m_brightness;
-		color.G += m_brightness;
-		color.R = 0;
-		cursor.Y++;
-	}
+		m_gfx_engine->DrawString(cursor, color ,m_rtc->GetTime().ToString(true), first_char_offset);
 
-	m_gfx_engine->Update();
+		// Draw habits
+		cursor.X = 0;
+		cursor.Y = 8;
+		color.B = (m_habit_manager->Count() - 1) * m_brightness;
+		color.R = 0;
+		color.G = 0;
+
+		for (size_t i = 0; i < m_habit_manager->Count(); i++)
+		{
+			for (size_t j = 0; j < m_habit_manager->RecordLength(); j++)
+			{
+				if (m_habit_manager->GetHabitStatus(i, j))
+				{
+					cursor.X = j;
+					m_gfx_engine->DrawPixel(cursor, color);
+					color.R += m_brightness;
+				}
+			}
+			color.B -= m_brightness;
+			color.G += m_brightness;
+			color.R = 0;
+			cursor.Y++;
+		}
+
+		m_gfx_engine->Update();
+	}
 }
 
 cmd_status_t DisplayController::CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream)

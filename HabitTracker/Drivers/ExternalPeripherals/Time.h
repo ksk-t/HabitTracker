@@ -40,6 +40,10 @@ struct Time_t
    StoreOperation_t StoreOperation{StoreOperation_t::Reset};
    std::string ToString(bool toggle_colon = false);
    bool FromString(std::string str);
+
+   bool operator!=(const Time_t& b){
+	   return Hours != b.Hours || Minutes != b.Minutes || Seconds != b.Seconds || TimeFormat != b.TimeFormat || DayLightSaving != b.DayLightSaving || StoreOperation != b.StoreOperation;
+   }
 };
 
 #endif /* EXTERNALPERIPHERALS_TIME_H_ */
