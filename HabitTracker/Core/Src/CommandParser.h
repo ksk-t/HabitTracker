@@ -17,7 +17,8 @@
 enum class Module_t
 {
    HabitManager,
-   RealTimeClock
+   RealTimeClock,
+   DisplayController
 };
 
 struct Command_t

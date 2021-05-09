@@ -17,7 +17,7 @@
 
 // Constants
 constexpr size_t MAX_RECORD_DAYS = 32;
-constexpr size_t MAX_NUM_HABITS = 10;
+constexpr size_t MAX_NUM_HABITS = 8;
 
 class HabitManager : public CommandCallableBase
 {

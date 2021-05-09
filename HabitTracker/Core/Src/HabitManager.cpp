@@ -111,7 +111,7 @@ cmd_status_t HabitManager::CommandCallback(uint8_t* buffer, size_t size, uint32_
 			uint8_t msg[] = "ERROR: Empty parameter list";
 			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
 		}
-
+		break;
 	}
 	default:
 		return cmd_status_t::InvalidCode;

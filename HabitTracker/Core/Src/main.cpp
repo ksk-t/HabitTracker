@@ -681,7 +681,7 @@ void GUIControllerTaskThread(void *argument)
 	// Register Commands
 	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
 	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
-
+	parser.RegisterModule(Module_t::DisplayController, &display);
 	Command_t cmd;
 	cmd.Module = Module_t::RealTimeClock;
 	cmd.Name = "settime";
@@ -697,6 +697,11 @@ void GUIControllerTaskThread(void *argument)
 	cmd.Name = "resethabits";
 	cmd.Help = "Resets all habits";
 	cmd.Code = HABIT_MANAGER_CMD_RESET;
+	parser.RegisterCommand(cmd);
+	cmd.Module = Module_t::DisplayController;
+	cmd.Name = "setbrightness";
+	cmd.Help = "Sets brightness of the LEDs";
+	cmd.Code = DISPLAY_CMD_SET_BRIGHTNESS;
 	parser.RegisterCommand(cmd);
 
 	for(;;)

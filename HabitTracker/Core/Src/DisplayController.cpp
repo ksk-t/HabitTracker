@@ -25,12 +25,26 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
    }
 }
 
+void DisplayController::SetBrightness(uint8_t brightness)
+{
+	if (brightness > MAX_BRIGHTNESS)
+	{
+		m_brightness = MAX_BRIGHTNESS;
+	}else if (brightness == 0)
+	{
+		m_brightness = 1;
+	}else
+	{
+		m_brightness = brightness;
+	}
+}
+
 void DisplayController::Draw()
 {
 	Point_t cursor{0, 0};
 
 	// Draw clock on top row
-	Color_t color{20, 0, 0};
+	Color_t color{uint8_t(1 + ((m_brightness - 1) * 20)), 0, 0};
 	size_t first_char_offset = 0;
 
 	m_gfx_engine->Fill(BasicColors::Black);
@@ -50,7 +64,7 @@ void DisplayController::Draw()
 	// Draw habits
 	cursor.X = 0;
 	cursor.Y = 8;
-	color.B = 14;
+	color.B = (m_habit_manager->Count() - 1) * m_brightness;
 	color.R = 0;
 	color.G = 0;
 
@@ -62,14 +76,50 @@ void DisplayController::Draw()
 			{
 				cursor.X = j;
 				m_gfx_engine->DrawPixel(cursor, color);
-				color.R++;
+				color.R += m_brightness;
 			}
 		}
-		color.B -= 2;
-		color.G += 2;
-		color.R= 0;
+		color.B -= m_brightness;
+		color.G += m_brightness;
+		color.R = 0;
 		cursor.Y++;
 	}
 
 	m_gfx_engine->Update();
+}
+
+cmd_status_t DisplayController::CommandCallback(uint8_t* buffer, size_t size, uint32_t code, IOStreamBase* iostream)
+{
+	switch(code)
+	{
+	case DISPLAY_CMD_SET_BRIGHTNESS:
+	{
+		if (size > 0)
+		{
+			std::string brightness((char*)buffer, size - 1); // - 1 to remove the \r
+
+			if (isdigit(brightness[0]))
+			{   // The first character at least needs to be a digit
+				SetBrightness(std::stoi(brightness));
+				uint8_t msg[] = "Brightness set";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}else
+			{
+				uint8_t msg[] = "Invalid brightness value";
+				iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			}
+
+		}else
+		{
+			uint8_t msg[] = "ERROR: Empty parameter list";
+			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+		}
+
+		break;
+	}
+	default:
+		return cmd_status_t::InvalidCode;
+	}
+
+	return cmd_status_t::Ok;
 }
