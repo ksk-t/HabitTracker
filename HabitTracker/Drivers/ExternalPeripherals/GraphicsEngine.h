@@ -22,9 +22,9 @@ public:
 	void Update();
 	void InvertRegion();
 	void DrawPixel(const Point_t point, const Color_t color);
-	size_t DrawChar(const Point_t point, const Color_t, const char ch, size_t offset = 0);
+	size_t DrawChar(const Point_t point, const Color_t, const char ch);
 	void SetFont(Font* font);
-	void DrawString(Point_t point, Color_t color, std::string str, size_t first_char_offset = 0);
+	void DrawString(Color_t color, std::string str);
 	void DrawBox(const Point_t point, const uint32_t width, const uint32_t height, const Color_t outline_color, const Color_t fill_color);
 	void DrawLine(const Point_t point1, const Point_t point2, const Color_t color);
 	void Fill(const Color_t color);

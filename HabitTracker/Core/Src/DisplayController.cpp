@@ -45,7 +45,6 @@ void DisplayController::Draw()
 
 	// Draw clock on top row
 	Color_t color{uint8_t(1 + ((m_brightness - 1) * 20)), 0, 0};
-	size_t first_char_offset = 0;
 
 	m_gfx_engine->Fill(BasicColors::Black);
 
@@ -53,16 +52,7 @@ void DisplayController::Draw()
 	if (current_time != m_last_time)
 	{
 		m_last_time = current_time;
-		if (current_time.Hours >= 10 && current_time.Hours <= 19)
-		{
-			first_char_offset = 2;
-			cursor.X = 0;
-		}else
-		{
-			first_char_offset = 0;
-			cursor.X = 2;
-		}
-		m_gfx_engine->DrawString(cursor, color ,m_rtc->GetTime().ToString(true), first_char_offset);
+		m_gfx_engine->DrawString(color ,m_rtc->GetTime().ToString(true));
 
 		// Draw habits
 		cursor.X = 0;

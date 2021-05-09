@@ -49,7 +49,7 @@ TEST(TimeTests, to_string_test_colon_toggle)
 	STRCMP_EQUAL("12:00AM", time.ToString(true).c_str());
 
    time.Seconds = 1;
-	STRCMP_EQUAL("12 00AM", time.ToString(true).c_str());
+	STRCMP_EQUAL("12  00AM", time.ToString(true).c_str());
 }
 
 TEST(TimeTests, from_string)

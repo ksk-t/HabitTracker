@@ -38,7 +38,7 @@ void GraphicsEngine::DrawPixel(const Point_t point, const Color_t color)
 	m_display->DrawPixel(point, color);
 }
 
-size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch, size_t offset)
+size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const char ch)
 {
 	uint32_t i, b, j;
 	Point_t curr_point{point.X, point.Y};
@@ -49,41 +49,39 @@ size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const 
 
 	// Use the font to write
 	Character font_char = m_font->GetChar(ch);
-	if (offset >= font_char.Width)
-	{
-		return font_char.Width;
-	}
 
 	for (i = 0; i < m_font->Height; i++) {
 
 		b = font_char.Data[i];
 
-		for (j = offset; j < font_char.Width; j++) {
+		for (j = 0; j < font_char.Width; j++) {
 			if ((b << j) & 0x8000) {
-				curr_point.X = point.X + j - offset;
+				curr_point.X = point.X + j;
 				m_display->DrawPixel(curr_point, color);
 			}
 		}
 		curr_point.Y++;
 	}
 
-	return font_char.Width - offset;
+	return font_char.Width;
 }
 
-void GraphicsEngine::DrawString(Point_t point, Color_t color, std::string str, size_t first_char_offset)
+void GraphicsEngine::DrawString(Color_t color, std::string str)
 {
-   Point_t curr_point = point;
+   Point_t curr_point{0, 0};
    const uint32_t characater_space = 1;
 
-   std::string::const_iterator iter = str.begin();
-   // Use offset on first character
-   if (iter != str.end())
-   {
-	   curr_point.X += this->DrawChar(curr_point, color, *iter, first_char_offset) + characater_space;
-	   iter++;
-   }
+   // Calculate width of string in pixels
+   size_t width = 0;
+	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
+	{
+		Character font_char = m_font->GetChar(*iter);
+		width += font_char.Width + characater_space;
+	}
 
-	for (; iter != str.end(); iter++)
+	curr_point.X = (m_display->GetWidth() - width) / 2;
+
+	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
 	{
 		curr_point.X += this->DrawChar(curr_point, color, *iter) + characater_space;
 	}

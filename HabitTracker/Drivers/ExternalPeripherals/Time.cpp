@@ -11,16 +11,31 @@
 std::string Time_t::ToString(bool toggle_colon) {
 	std::string ret_str = "";
 
-	ret_str += std::to_string(Hours);
+	if (Hours == 11)
+	{
+		ret_str = "1   1"; // #HACK: Special spacing for 11 to look better when displayed
+	}else
+	{
+		ret_str += std::to_string(Hours);
+	}
+
 	if (toggle_colon && Seconds % 2 == 1) {
-		ret_str += " ";
+		ret_str += "  ";
 	} else {
 		ret_str += ":";
 	}
-	if (Minutes < 10) {
+	if (Minutes < 10)
+	{
 		ret_str += "0";
+		ret_str += std::to_string(Minutes);
+	}else if (Minutes == 11)
+	{
+		ret_str += "1   1"; // #HACK: Special spacing for 11 to look better when displayed
+	}else
+	{
+		ret_str += std::to_string(Minutes);
 	}
-	ret_str += std::to_string(Minutes);
+
 	if (TimeFormat == TimeFormat_t::Format_12_AM) {
 		ret_str += "AM";
 	} else {
