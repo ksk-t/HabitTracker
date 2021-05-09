@@ -66,8 +66,13 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 			if (cmd_str == cmd.Name)
 			{
 				size_t module_index = static_cast<size_t>(cmd.Module);
-				m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, byte_read - cmd_index, cmd.Code, iostream);
-				return true;
+				if (cmd_status_t::Ok == m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, byte_read - cmd_index, cmd.Code, iostream))
+				{
+					return true;
+				}else
+				{
+					return false;
+				}
 			}
 		}
 

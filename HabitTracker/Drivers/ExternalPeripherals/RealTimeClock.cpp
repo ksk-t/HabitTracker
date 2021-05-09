@@ -139,20 +139,17 @@ cmd_status_t RealTimeClock::CommandCallback(uint8_t* buffer, size_t size, uint32
 		if (new_time.FromString(time_string))
 		{
 			SetTime(new_time);
-			uint8_t msg[] = "New time set";
-			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
+			return cmd_status_t::Ok;
 		}else
 		{
-			uint8_t msg[] = "ERROR: Invalid time format";
-			iostream->Write(msg, sizeof(msg) / sizeof(msg[0]));
 			return cmd_status_t::InvalidParamter;
 		}
-
+		break;
 	}
 	default:
 		return cmd_status_t::InvalidCode;
 	}
 
-	return cmd_status_t::Ok;
+
 }
 
