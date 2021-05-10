@@ -703,6 +703,16 @@ void GUIControllerTaskThread(void *argument)
 	cmd.Help = "Sets brightness of the LEDs";
 	cmd.Code = DISPLAY_CMD_SET_BRIGHTNESS;
 	parser.RegisterCommand(cmd);
+	cmd.Module = Module_t::DisplayController;
+	cmd.Name = "disabledraw";
+	cmd.Help = "Stops display from updating";
+	cmd.Code = DISPLAY_CMD_DISABLE_DRAW;
+	parser.RegisterCommand(cmd);
+	cmd.Module = Module_t::DisplayController;
+	cmd.Name = "enabledraw";
+	cmd.Help = "Start display updating";
+	cmd.Code = DISPLAY_CMD_ENABLE_DRAW;
+	parser.RegisterCommand(cmd);
 
 	for(;;)
 	{

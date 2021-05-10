@@ -14,6 +14,8 @@
 #include "CommandCallableBase.h"
 
 #define DISPLAY_CMD_SET_BRIGHTNESS 0
+#define DISPLAY_CMD_DISABLE_DRAW   1
+#define DISPLAY_CMD_ENABLE_DRAW    2
 
 class DisplayController : public CommandCallableBase
 {
@@ -41,8 +43,8 @@ private:
 
    static const uint8_t MAX_BRIGHTNESS{5};
    uint8_t m_brightness{1};
-
    Time_t m_last_time;
+   bool m_enabled{true};
 };
 
 
