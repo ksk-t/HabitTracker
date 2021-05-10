@@ -42,7 +42,7 @@ static const Character FONT_CLOCK_7{FONT_CLOCK_DATA_7, 4};
 static const Character FONT_CLOCK_8{FONT_CLOCK_DATA_8, 4};
 static const Character FONT_CLOCK_9{FONT_CLOCK_DATA_9, 4};
 static const Character FONT_CLOCK_COLON{FONT_CLOCK_DATA_COLON, 1};
-static const Character FONT_CLOCK_A{FONT_CLOCK_DATA_A, 4};
+static const Character FONT_CLOCK_A{FONT_CLOCK_DATA_A, 3};
 static const Character FONT_CLOCK_P{FONT_CLOCK_DATA_P, 3};
 static const Character FONT_CLOCK_M{FONT_CLOCK_DATA_M, 5};
 

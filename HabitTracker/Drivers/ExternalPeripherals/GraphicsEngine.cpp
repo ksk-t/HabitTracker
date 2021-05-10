@@ -69,21 +69,31 @@ size_t GraphicsEngine::DrawChar(const Point_t point, const Color_t color, const 
 void GraphicsEngine::DrawString(Color_t color, std::string str)
 {
    Point_t curr_point{0, 0};
-   const uint32_t characater_space = 1;
+   const uint32_t character_space = 1;
 
    // Calculate width of string in pixels
    size_t width = 0;
 	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
 	{
 		Character font_char = m_font->GetChar(*iter);
-		width += font_char.Width + characater_space;
+		width += font_char.Width;
+		// Do not add space to last character
+		if ((iter + 1) != str.end())
+		{
+			width += character_space;
+		}
 	}
 
 	curr_point.X = (m_display->GetWidth() - width) / 2;
 
 	for (std::string::const_iterator iter = str.begin(); iter != str.end(); iter++)
 	{
-		curr_point.X += this->DrawChar(curr_point, color, *iter) + characater_space;
+		curr_point.X += this->DrawChar(curr_point, color, *iter);
+		// Do not add space to last character
+		if ((iter + 1) != str.end())
+		{
+			curr_point.X += character_space;
+		}
 	}
 }
 

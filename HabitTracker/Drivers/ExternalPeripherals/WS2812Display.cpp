@@ -43,6 +43,7 @@ Status_t WS2812Display::DrawPixel(Point_t point, Color_t color)
 Status_t WS2812Display::Update()
 {
    m_led_strip->Update();
+   return Status_t::OK;
 }
 
 uint32_t WS2812Display::GetHeight()
