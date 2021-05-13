@@ -134,7 +134,7 @@ cmd_status_t RealTimeClock::CommandCallback(uint8_t* buffer, size_t size, uint32
 	{
 	case TIME_CMD_SET_TIME:
 	{
-		std::string time_string((char*)buffer, size - 1); // Buffer includes \r character. - 1 to remove it
+		std::string time_string((char*)buffer, size); // Buffer includes \r character. - 1 to remove it
 		Time_t new_time;
 		if (new_time.FromString(time_string))
 		{

@@ -95,7 +95,7 @@ cmd_status_t HabitManager::CommandCallback(uint8_t* buffer, size_t size, uint32_
 	{
 		if (size > 0)
 		{
-			std::string str((char*)buffer, size - 1); // - 1 to remove \r
+			std::string str((char*)buffer, size); // - 1 to remove \r
 			if (ToggleHabit(str))
 			{
 				return cmd_status_t::Ok;

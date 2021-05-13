@@ -59,6 +59,15 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 			cmd_index++;
 		}
 
+		// Extract command from buffer
+		size_t parameters_len = 0;
+		size_t parameter_index = cmd_index;
+		while (cmd_index < byte_read && read_buffer[parameter_index] != 0 && read_buffer[parameter_index] != '\r')
+		{
+			parameters_len++;
+			parameter_index++;
+		}
+
 		// Search command list for given command
 		for (size_t i = 0; i < m_num_commands;i++)
 		{
@@ -66,7 +75,7 @@ bool CommandParser::Execute(IOStreamBase* iostream)
 			if (cmd_str == cmd.Name)
 			{
 				size_t module_index = static_cast<size_t>(cmd.Module);
-				if (cmd_status_t::Ok == m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, byte_read - cmd_index, cmd.Code, iostream))
+				if (cmd_status_t::Ok == m_module_callbacks[module_index]->CommandCallback(read_buffer + cmd_index, parameters_len, cmd.Code, iostream))
 				{
 					return true;
 				}else

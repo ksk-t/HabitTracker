@@ -95,7 +95,7 @@ cmd_status_t DisplayController::CommandCallback(uint8_t* buffer, size_t size, ui
 	{
 		if (size > 0)
 		{
-			std::string brightness((char*)buffer, size - 1); // - 1 to remove the \r
+			std::string brightness((char*)buffer, size); // - 1 to remove the \r
 
 			if (isdigit(brightness[0]))
 			{   // The first character at least needs to be a digit

@@ -49,7 +49,8 @@ typedef StaticEventGroup_t osStaticEventGroupDef_t;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+uint8_t tx_data[] = "AT+UART?\r\n";
+uint8_t rx_data[32] = {0};
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -66,6 +67,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 DMA_HandleTypeDef hdma_tim3_ch2;
 
+UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
@@ -107,6 +109,7 @@ static void MX_I2C1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_UART5_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -156,6 +159,7 @@ int main(void)
   MX_RTC_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize HAL
@@ -194,8 +198,6 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-
-
   /* USER CODE BEGIN RTOS_THREADS */
   loggerTaskAttributes.name = "LoggerTask";
   loggerTaskAttributes.cb_mem = &loggerTaskControlBlock;
@@ -224,6 +226,8 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
+  // Testing
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -512,6 +516,39 @@ static void MX_TIM4_Init(void)
 }
 
 /**
+  * @brief UART5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART5_Init(void)
+{
+
+  /* USER CODE BEGIN UART5_Init 0 */
+
+  /* USER CODE END UART5_Init 0 */
+
+  /* USER CODE BEGIN UART5_Init 1 */
+
+  /* USER CODE END UART5_Init 1 */
+  huart5.Instance = UART5;
+  huart5.Init.BaudRate = 9600;
+  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.StopBits = UART_STOPBITS_1;
+  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Mode = UART_MODE_TX_RX;
+  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART5_Init 2 */
+
+  /* USER CODE END UART5_Init 2 */
+
+}
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -673,11 +710,8 @@ void GUIControllerTaskThread(void *argument)
 	HabitManager habit_manager{};
 	RealTimeClock rtc{&hrtc};
 	DisplayController display{&gEngine, &rtc, &habit_manager};
-	IOStreamUART uart_stream{&huart3};
+	IOStreamUART bt_stream{&huart5};
 	CommandParser parser{};
-
-	// Initialize modules
-	uart_stream.TransmitStartChars();
 
 	// Register Commands
 	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
@@ -717,21 +751,20 @@ void GUIControllerTaskThread(void *argument)
 
 	for(;;)
 	{
-		// Check UART stream for input
-		size_t bytes_available = 0;
-		if ((bytes_available = uart_stream.BytesAvailable()))
+		size_t bytes_available_bt = 0;
+		if ((bytes_available_bt = bt_stream.BytesAvailable()))
 		{
 			uint8_t last_char = 0;
-			uint8_t end_of_line = '\r';
+			uint8_t end_of_line = '\n';
 
-			if ((uart_stream.Peak(bytes_available - 1, last_char) && last_char == end_of_line) || uart_stream.IsRxBufferFull())
+			if ((bt_stream.Peak(bytes_available_bt - 1, last_char) && last_char == end_of_line) || bt_stream.IsRxBufferFull())
 			{
-				if (false == parser.Execute(&uart_stream))
+				if (false == parser.Execute(&bt_stream))
 				{
 					uint8_t msg_invalid_cmd[] = "Invalid command";
-					uart_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
+					bt_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
 				}
-				uart_stream.TransmitStartChars();
+				bt_stream.TransmitStartChars();
 			}
         }
 
