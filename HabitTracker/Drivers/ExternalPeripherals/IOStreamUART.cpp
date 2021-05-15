@@ -7,10 +7,6 @@
 
 #include "IOStreamUART.h"
 
-static const size_t RX_INTERRUPT_BUFFER_SIZE = 128;
-static uint8_t m_rx_interrupt_buffer[RX_INTERRUPT_BUFFER_SIZE];
-static volatile size_t m_bytes_available = 0;
-
 IOStreamUART::IOStreamUART(UART_HandleTypeDef* uart_handle) :
    m_uart_handle(uart_handle),
    m_read_offset(0)

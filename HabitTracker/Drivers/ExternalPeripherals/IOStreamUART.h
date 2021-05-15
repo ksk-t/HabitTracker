@@ -77,6 +77,9 @@ private:
    UART_HandleTypeDef* m_uart_handle; 
    size_t m_read_offset;
 
+   static const size_t RX_INTERRUPT_BUFFER_SIZE = 128;
+   uint8_t m_rx_interrupt_buffer[RX_INTERRUPT_BUFFER_SIZE];
+   size_t m_bytes_available = 0;
 };
 
 
