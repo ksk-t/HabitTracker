@@ -68,6 +68,11 @@ public:
     */
    void TransmitStartChars();
 
+   /*
+    * Clears buffer and request additional data from UART port
+    */
+   void Reset();
+
 private:
    UART_HandleTypeDef* m_uart_handle; 
    size_t m_read_offset;

@@ -761,10 +761,13 @@ void GUIControllerTaskThread(void *argument)
 			{
 				if (false == parser.Execute(&bt_stream))
 				{
-					uint8_t msg_invalid_cmd[] = "Invalid command";
+					uint8_t msg_invalid_cmd[] = "ERROR: INVALID COMMAND\r\n";
 					bt_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
+				}else
+				{
+					uint8_t msg_valid_cmd[] = "OK\r\n";
+					bt_stream.Write(msg_valid_cmd, sizeof(msg_valid_cmd) / sizeof(msg_valid_cmd[0]));
 				}
-				bt_stream.TransmitStartChars();
 			}
         }
 
