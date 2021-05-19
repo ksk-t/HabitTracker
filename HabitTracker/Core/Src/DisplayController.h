@@ -44,6 +44,10 @@ private:
    static const uint8_t MAX_BRIGHTNESS{5};
    uint8_t m_brightness{1};
    Time_t m_last_time;
+   Time_t m_brightness_time_change1;
+   Time_t m_brightness_time_change2;
+   uint8_t m_low_brightness_level{1};
+   uint8_t m_high_brightness_level{3};
    bool m_enabled{true};
 };
 

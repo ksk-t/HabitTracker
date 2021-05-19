@@ -17,6 +17,15 @@ DisplayController::DisplayController(GraphicsEngine* gfx_engine, RealTimeClock* 
    rtc->Initialize();
 
    m_enabled = true;
+
+   // Low to high brightness transition time
+   m_brightness_time_change1.Hours = 9;
+   m_brightness_time_change1.TimeFormat = TimeFormat_t::Format_12_AM;
+
+   // High to low brightness transition time
+   m_brightness_time_change2.Hours = 7;
+   m_brightness_time_change2.TimeFormat = TimeFormat_t::Format_12_PM;
+
 }
 
 void DisplayController::SetBrightness(uint8_t brightness)
@@ -72,6 +81,15 @@ void DisplayController::Draw()
 				color.G += m_brightness;
 				color.R = 0;
 				cursor.Y++;
+			}
+
+			// Set brightness
+			if (current_time == m_brightness_time_change1)
+			{
+				SetBrightness(m_high_brightness_level);
+			}else if (current_time == m_brightness_time_change2)
+			{
+				SetBrightness(m_low_brightness_level);
 			}
 
 			m_gfx_engine->Update();

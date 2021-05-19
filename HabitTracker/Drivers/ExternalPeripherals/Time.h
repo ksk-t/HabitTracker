@@ -44,6 +44,10 @@ struct Time_t
    bool operator!=(const Time_t& b){
 	   return Hours != b.Hours || Minutes != b.Minutes || Seconds != b.Seconds || TimeFormat != b.TimeFormat || DayLightSaving != b.DayLightSaving || StoreOperation != b.StoreOperation;
    }
+
+   bool operator==(const Time_t& b){
+	   return Hours == b.Hours && Minutes == b.Minutes && Seconds == b.Seconds && TimeFormat == b.TimeFormat && DayLightSaving == b.DayLightSaving && StoreOperation == b.StoreOperation;
+   }
 };
 
 #endif /* EXTERNALPERIPHERALS_TIME_H_ */
