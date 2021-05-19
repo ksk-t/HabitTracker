@@ -6,6 +6,7 @@
  */
 
 #include "HabitManager.h"
+#include "StringUtilities.h"
 
 HabitManager::HabitManager()
 {
@@ -37,35 +38,17 @@ bool HabitManager::ToggleHabit(size_t id, uint8_t day)
 
 bool HabitManager::ToggleHabit(std::string str)
 {
-	std::string str_partition;
-	std::string::iterator iter = str.begin();
+	size_t buffer_size = 2;
+	uint32_t partition_buffer[buffer_size] = {0};
 	size_t id = 0;
 	size_t day = 0;
 
-	if (!isdigit(*iter))
+	if (buffer_size != StringUtilities::SplitToUint(str, ',', partition_buffer, buffer_size))
 	{
 		return false;
 	}
-	while (isdigit(*iter) && iter != str.end())
-	{
-	   str_partition += *iter;
-	   iter++;
-	}
-	id = std::stoi(str_partition);
-
-	iter++; // Skip the "," character
-	str_partition = "";
-	if (!isdigit(*iter))
-	{
-		return false;
-	}
-	while (isdigit(*iter) && iter != str.end())
-	{
-	   str_partition += *iter;
-	   iter++;
-	}
-
-	day = std::stoi(str_partition);
+	id = partition_buffer[0];
+	day = partition_buffer[1];
 
 	return ToggleHabit(id, day);
 }

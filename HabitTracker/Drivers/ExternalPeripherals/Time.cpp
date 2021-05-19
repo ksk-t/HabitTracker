@@ -7,6 +7,7 @@
 
 
 #include "Time.h"
+#include "StringUtilities.h"
 
 std::string Time_t::ToString(bool toggle_colon) {
 	std::string ret_str = "";
@@ -47,60 +48,48 @@ std::string Time_t::ToString(bool toggle_colon) {
 
 bool Time_t::FromString(std::string str)
 {
-	std::string str_partition;
-	std::string::iterator iter = str.begin();
-	// Get Hours
-	if (!isdigit(*iter))
+	size_t buffer_size = 3;
+	uint32_t parse_buffer[buffer_size] = {0};
+	if (buffer_size != StringUtilities::SplitToUint(str, ':', parse_buffer, buffer_size))
 	{
 		return false;
 	}
-   while (isdigit(*iter) && iter != str.end())
-   {
-	   str_partition += *iter;
-	   iter++;
-   }
-   if (str_partition.length() > 2)
-   {
-	   return false;
-   }
-   Hours = std::stoi(str_partition);
 
-   // Get Minutes
-   iter++; // Skip the ":" character
-   str_partition = "";
-   if (!isdigit(*iter))
-   {
-	   return false;
-   }
-   while (isdigit(*iter) && iter != str.end())
-   {
-	   str_partition += *iter;
-	   iter++;
-   }
-   if (str_partition.length() > 2)
-   {
-	   return false;
-   }
+	// Set hours and time format
+	if (parse_buffer[0] > 23)
+	{
+		return false;
+	}else if (parse_buffer[0] > 12)
+	{
+		Hours = parse_buffer[0] - 12;
+		TimeFormat = TimeFormat_t::Format_12_PM;
+	}else if (parse_buffer[0] == 0)
+	{
+		Hours = 12;
+		TimeFormat = TimeFormat_t::Format_12_AM;
+	}else
+	{
+		Hours = parse_buffer[0];
+		TimeFormat = TimeFormat_t::Format_12_AM;
+	}
 
-   Minutes = std::stoi(str_partition);
+	// Set Minutes
+	if (parse_buffer[1] > 59)
+	{
+		return false;
+	}else
+	{
+		Minutes = parse_buffer[1];
+	}
 
-   // Get AM/PM
-   str_partition = "";
-   while (iter != str.end())
-   {
-	   str_partition += *iter;
-	   iter++;
-   }
-   if (str_partition == "AM")
-   {
-	   TimeFormat = TimeFormat_t::Format_12_AM;
-   }else if (str_partition == "PM")
-   {
-	   TimeFormat = TimeFormat_t::Format_12_PM;
-   }else
-   {
-	   return false;
-   }
+	// Set seconds
+	if (parse_buffer[2] > 59)
+	{
+		return false;
+	}else
+	{
+		Seconds = parse_buffer[2];
+	}
 
 	return true;
 }
