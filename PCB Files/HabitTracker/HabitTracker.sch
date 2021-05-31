@@ -128,9 +128,9 @@ Wire Wire Line
 Wire Wire Line
 	29250 6300 30100 6300
 Text Label 27050 6100 0    50   ~ 0
-SERIAL_IN
+SERIAL_LINK2
 Text Label 29550 6100 0    50   ~ 0
-SERIAL_LINK1
+SERIAL_OUT
 Wire Wire Line
 	29250 6100 30100 6100
 $Comp
@@ -199,9 +199,9 @@ Wire Wire Line
 Wire Wire Line
 	9950 16200 10800 16200
 Text Label 7750 16000 0    50   ~ 0
-SERIAL_IN
-Text Label 10250 16000 0    50   ~ 0
 SERIAL_LINK1
+Text Label 10250 16000 0    50   ~ 0
+SERIAL_LINK2
 Wire Wire Line
 	9950 16000 10800 16000
 $Comp
