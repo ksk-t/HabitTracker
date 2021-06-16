@@ -37,6 +37,7 @@
 #include "BasicTimer.h"
 #include "DisplayController.h"
 #include "WS2812Display.h"
+#include "LEDTLC5955.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,6 +64,9 @@ I2C_HandleTypeDef hi2c1;
 
 RTC_HandleTypeDef hrtc;
 
+SPI_HandleTypeDef hspi1;
+
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 DMA_HandleTypeDef hdma_tim3_ch2;
@@ -71,6 +75,17 @@ UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 
 // Threads
@@ -110,6 +125,8 @@ static void MX_RTC_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_UART5_Init(void);
+static void MX_SPI1_Init(void);
+static void MX_TIM2_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -160,10 +177,46 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_UART5_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize HAL
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+
+	LEDTLC5955 tlc{};
+	tlc.SetMaxCurrent(7, 7, 7);
+	tlc.SetGlobalBrightness(70, 127, 127);
+	TLC5955_function_t function;
+	function.auto_display_repeat = true;
+	tlc.SetFunction(function);
+	Color_t color{0, 0, 0};
+	tlc.SetLed(4, color);
+	tlc.UpdateControlSettings();
+
+	while (true)
+	{
+		for (int i = 0; i < 30000; i+= 100)
+		{
+			color.G = i;
+			color.B = i;
+			tlc.SetLed(13, color);
+			tlc.UpdateLED();
+			HAL_Delay(20);
+		}
+
+		for (int i = 30000; i > 100; i-= 100)
+		{
+			color.G = i;
+			color.B = i;
+			tlc.SetLed(13, color);
+			tlc.UpdateLED();
+			HAL_Delay(20);
+		}
+	}
+
+
+
 
   /* USER CODE END 2 */
 
@@ -198,6 +251,8 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   loggerTaskAttributes.name = "LoggerTask";
   loggerTaskAttributes.cb_mem = &loggerTaskControlBlock;
@@ -408,6 +463,103 @@ static void MX_RTC_Init(void)
 }
 
 /**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 10;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 5;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -611,12 +763,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
@@ -649,6 +805,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LATCH_Pin */
+  GPIO_InitStruct.Pin = LATCH_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LATCH_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BUTTON_SELECT_Pin */
   GPIO_InitStruct.Pin = BUTTON_SELECT_Pin;
@@ -704,74 +867,74 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void GUIControllerTaskThread(void *argument)
 {
-	WS2812 ledstrip{&htim3};
-	WS2812Display led_display{&ledstrip};
-	GraphicsEngine gEngine{&led_display};
-	HabitManager habit_manager{};
-	RealTimeClock rtc{&hrtc};
-	DisplayController display{&gEngine, &rtc, &habit_manager};
-	IOStreamUART bt_stream{&huart5};
-	CommandParser parser{};
+//	WS2812 ledstrip{&htim3};
+//	WS2812Display led_display{&ledstrip};
+//	GraphicsEngine gEngine{&led_display};
+//	HabitManager habit_manager{};
+//	RealTimeClock rtc{&hrtc};
+//	DisplayController display{&gEngine, &rtc, &habit_manager};
+//	IOStreamUART bt_stream{&huart5};
+//	CommandParser parser{};
 
-	// Register Commands
-	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
-	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
-	parser.RegisterModule(Module_t::DisplayController, &display);
-	Command_t cmd;
-	cmd.Module = Module_t::RealTimeClock;
-	cmd.Name = "settime";
-	cmd.Help = "Set the time. Format: dd:dd<AM/PM>";
-	cmd.Code = TIME_CMD_SET_TIME;
-	parser.RegisterCommand(cmd);
-	cmd.Module = Module_t::HabitManager;
-	cmd.Name = "togglehabit";
-	cmd.Help = "Toggles a habit. Format <ID>,<DAY>";
-	cmd.Code = HABIT_MANAGER_CMD_TOGGLE;
-	parser.RegisterCommand(cmd);
-	cmd.Module = Module_t::HabitManager;
-	cmd.Name = "resethabits";
-	cmd.Help = "Resets all habits";
-	cmd.Code = HABIT_MANAGER_CMD_RESET;
-	parser.RegisterCommand(cmd);
-	cmd.Module = Module_t::DisplayController;
-	cmd.Name = "setbrightness";
-	cmd.Help = "Sets brightness of the LEDs";
-	cmd.Code = DISPLAY_CMD_SET_BRIGHTNESS;
-	parser.RegisterCommand(cmd);
-	cmd.Module = Module_t::DisplayController;
-	cmd.Name = "disabledraw";
-	cmd.Help = "Stops display from updating";
-	cmd.Code = DISPLAY_CMD_DISABLE_DRAW;
-	parser.RegisterCommand(cmd);
-	cmd.Module = Module_t::DisplayController;
-	cmd.Name = "enabledraw";
-	cmd.Help = "Start display updating";
-	cmd.Code = DISPLAY_CMD_ENABLE_DRAW;
-	parser.RegisterCommand(cmd);
+//	// Register Commands
+//	parser.RegisterModule(Module_t::RealTimeClock, &rtc);
+//	parser.RegisterModule(Module_t::HabitManager, &habit_manager);
+//	parser.RegisterModule(Module_t::DisplayController, &display);
+//	Command_t cmd;
+//	cmd.Module = Module_t::RealTimeClock;
+//	cmd.Name = "settime";
+//	cmd.Help = "Set the time. Format: dd:dd<AM/PM>";
+//	cmd.Code = TIME_CMD_SET_TIME;
+//	parser.RegisterCommand(cmd);
+//	cmd.Module = Module_t::HabitManager;
+//	cmd.Name = "togglehabit";
+//	cmd.Help = "Toggles a habit. Format <ID>,<DAY>";
+//	cmd.Code = HABIT_MANAGER_CMD_TOGGLE;
+//	parser.RegisterCommand(cmd);
+//	cmd.Module = Module_t::HabitManager;
+//	cmd.Name = "resethabits";
+//	cmd.Help = "Resets all habits";
+//	cmd.Code = HABIT_MANAGER_CMD_RESET;
+//	parser.RegisterCommand(cmd);
+//	cmd.Module = Module_t::DisplayController;
+//	cmd.Name = "setbrightness";
+//	cmd.Help = "Sets brightness of the LEDs";
+//	cmd.Code = DISPLAY_CMD_SET_BRIGHTNESS;
+//	parser.RegisterCommand(cmd);
+//	cmd.Module = Module_t::DisplayController;
+//	cmd.Name = "disabledraw";
+//	cmd.Help = "Stops display from updating";
+//	cmd.Code = DISPLAY_CMD_DISABLE_DRAW;
+//	parser.RegisterCommand(cmd);
+//	cmd.Module = Module_t::DisplayController;
+//	cmd.Name = "enabledraw";
+//	cmd.Help = "Start display updating";
+//	cmd.Code = DISPLAY_CMD_ENABLE_DRAW;
+//	parser.RegisterCommand(cmd);
 
 	for(;;)
 	{
-		size_t bytes_available_bt = 0;
-		if ((bytes_available_bt = bt_stream.BytesAvailable()))
-		{
-			uint8_t last_char = 0;
-			uint8_t end_of_line = '\n';
-
-			if ((bt_stream.Peak(bytes_available_bt - 1, last_char) && last_char == end_of_line) || bt_stream.IsRxBufferFull())
-			{
-				if (false == parser.Execute(&bt_stream))
-				{
-					uint8_t msg_invalid_cmd[] = "ERROR: INVALID COMMAND\r\n";
-					bt_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
-				}else
-				{
-					uint8_t msg_valid_cmd[] = "OK\r\n";
-					bt_stream.Write(msg_valid_cmd, sizeof(msg_valid_cmd) / sizeof(msg_valid_cmd[0]));
-				}
-			}
-        }
-
-		display.Draw();
+//		size_t bytes_available_bt = 0;
+//		if ((bytes_available_bt = bt_stream.BytesAvailable()))
+//		{
+//			uint8_t last_char = 0;
+//			uint8_t end_of_line = '\n';
+//
+//			if ((bt_stream.Peak(bytes_available_bt - 1, last_char) && last_char == end_of_line) || bt_stream.IsRxBufferFull())
+//			{
+//				if (false == parser.Execute(&bt_stream))
+//				{
+//					uint8_t msg_invalid_cmd[] = "ERROR: INVALID COMMAND\r\n";
+//					bt_stream.Write(msg_invalid_cmd, sizeof(msg_invalid_cmd) / sizeof(msg_invalid_cmd[0]));
+//				}else
+//				{
+//					uint8_t msg_valid_cmd[] = "OK\r\n";
+//					bt_stream.Write(msg_valid_cmd, sizeof(msg_valid_cmd) / sizeof(msg_valid_cmd[0]));
+//				}
+//			}
+//        }
+//
+//		display.Draw();
 
 		osDelay(200);
 	}

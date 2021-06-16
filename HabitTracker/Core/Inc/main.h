@@ -78,6 +78,8 @@ void Error_Handler(void);
 #define RMII_RXD1_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define LATCH_Pin GPIO_PIN_12
+#define LATCH_GPIO_Port GPIOF
 #define BUTTON_SELECT_Pin GPIO_PIN_11
 #define BUTTON_SELECT_GPIO_Port GPIOE
 #define RMII_TXD1_Pin GPIO_PIN_13

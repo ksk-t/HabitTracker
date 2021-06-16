@@ -12,14 +12,14 @@
 
 struct Color_t
 {
-	Color_t (uint8_t r_val = 0, uint8_t g_val = 0, uint8_t b_val = 0) :
+	Color_t (uint32_t r_val = 0, uint32_t g_val = 0, uint32_t b_val = 0) :
 		R(r_val),
 		G(g_val),
 		B(b_val) {}
 
-	uint8_t R{0};
-	uint8_t G{0};
-	uint8_t B{0};
+	uint32_t R{0};
+	uint32_t G{0};
+	uint32_t B{0};
 
 	bool operator==(const Color_t &c)
 		{
