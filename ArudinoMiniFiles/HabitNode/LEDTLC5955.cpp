@@ -3,12 +3,15 @@
  */
 
 #include "LEDTLC5955.h"
-#include "main.h"
-#include <cstring>
-#include "stm32f2xx_hal.h"
+#include "FastPwmPin.h"
+#include <SPI.h>
 
-extern SPI_HandleTypeDef hspi1;
-extern TIM_HandleTypeDef htim2;
+
+// Aurduino pin configuration
+#define PIN_GSCLK 3
+#define PIN_LAT   10
+#define PIN_MOSI  11
+#define PIN_SCLK  13
 
 #define TLC5955_CONTROL_BIT (768)
 #define TLC5955_CONTROL_BYTE (0x96)
@@ -29,13 +32,35 @@ extern TIM_HandleTypeDef htim2;
 #define TLC5955_GREEN_MAX_CURRENT_BIT (339)
 #define TLC5966_BLUE_MAX_CURRENT_BIT (342)
 
+static void spi_transfer(uint8_t* buffer, size_t size)
+{
+  for (size_t i = 0; i < size; i++)
+  {
+    SPI.transfer(buffer[i]);
+  }
+}
+
+static void latch()
+{
+  digitalWrite(PIN_LAT, HIGH);   // turn the LED on (HIGH is the voltage level)                // wait for a second
+  digitalWrite(PIN_LAT, LOW);    // turn the LED off by making the voltage LOW
+}
+
 LEDTLC5955::LEDTLC5955()
 {
 	memset(m_gs_buffer, 0, TLC5955_COMMON_BUFFER_SIZE);
 	memset(m_control_buffer, 0, TLC5955_COMMON_BUFFER_SIZE);
 
-   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);
+  // Initialize Pins
+  pinMode(PIN_SCLK, OUTPUT);
+  pinMode(PIN_MOSI, OUTPUT);
+  digitalWrite(PIN_MOSI, LOW);
+  pinMode(PIN_LAT, OUTPUT);
+  digitalWrite(PIN_LAT, LOW);
 
+  FastPwmPin::enablePwmPin(PIN_GSCLK, 4000000L, 50);
+
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
 }
 
 void LEDTLC5955::SetFunction(TLC5955_function_t function)
@@ -122,32 +147,19 @@ void LEDTLC5955::UpdateControlSettings()
 	set_bit(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE, TLC5955_CONTROL_BIT, true);
 	m_control_buffer[1] = TLC5955_CONTROL_BYTE;
 
-   HAL_SPI_Transmit(&hspi1, m_control_buffer, TLC5955_COMMON_BUFFER_SIZE, 0xffffff); 
-   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_SET);  
-   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);  
+  spi_transfer(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE);
+  latch();
 }
 
 void LEDTLC5955::UpdateLED()
 {
-	while(true)
-	{
-		   // Enable PWM Clock
+     spi_transfer(m_gs_buffer, TLC5955_COMMON_BUFFER_SIZE);
+     latch();
+}
 
-		   HAL_SPI_Transmit(&hspi1, m_gs_buffer, TLC5955_COMMON_BUFFER_SIZE, 0xffffff);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_SET);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);
-		   HAL_TIM_PWM_Start (&htim2, TIM_CHANNEL_3);
-
-		   HAL_TIM_PWM_Stop (&htim2, TIM_CHANNEL_3);
-
-		   HAL_SPI_Transmit(&hspi1, m_gs_buffer, TLC5955_COMMON_BUFFER_SIZE, 0xffffff);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_SET);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);
-
-		   HAL_SPI_Transmit(&hspi1, m_gs_buffer, TLC5955_COMMON_BUFFER_SIZE, 0xffffff);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_SET);
-		   HAL_GPIO_WritePin(LATCH_GPIO_Port, LATCH_Pin, GPIO_PIN_RESET);
-
-	}
-
+cmd_status_t LEDTLC5955::CommandCallback(uint8_t* buffer, size_t size, uint32_t code)
+{
+  m_gs_buffer[70] = 0xff;
+  Serial.write("Here");
+  return cmd_status_t::Ok;
 }

@@ -186,36 +186,14 @@ int main(void)
 
 	LEDTLC5955 tlc{};
 	tlc.SetMaxCurrent(7, 7, 7);
-	tlc.SetGlobalBrightness(70, 127, 127);
+	tlc.SetGlobalBrightness(4, 40, 127);
 	TLC5955_function_t function;
-	function.auto_display_repeat = true;
+	function.display_timing_reset_enable = true;
 	tlc.SetFunction(function);
-	Color_t color{0, 0, 0};
+	Color_t color{60000, 60000, 60000};
 	tlc.SetLed(4, color);
 	tlc.UpdateControlSettings();
-
-	while (true)
-	{
-		for (int i = 0; i < 30000; i+= 100)
-		{
-			color.G = i;
-			color.B = i;
-			tlc.SetLed(13, color);
-			tlc.UpdateLED();
-			HAL_Delay(20);
-		}
-
-		for (int i = 30000; i > 100; i-= 100)
-		{
-			color.G = i;
-			color.B = i;
-			tlc.SetLed(13, color);
-			tlc.UpdateLED();
-			HAL_Delay(20);
-		}
-	}
-
-
+	tlc.UpdateLED();
 
 
   /* USER CODE END 2 */
