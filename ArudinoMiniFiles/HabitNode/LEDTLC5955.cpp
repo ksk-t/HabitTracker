@@ -4,6 +4,7 @@
 
 #include "LEDTLC5955.h"
 #include "FastPwmPin.h"
+#include "StringUtilities.h"
 #include <SPI.h>
 
 
@@ -32,12 +33,40 @@
 #define TLC5955_GREEN_MAX_CURRENT_BIT (339)
 #define TLC5966_BLUE_MAX_CURRENT_BIT (342)
 
+static void print_buffer(uint8_t* buffer, size_t size)
+{
+  Serial.println("Printing buffer");
+  for (int i = 0; i < size; i++)
+  {
+    Serial.print(i);
+    Serial.print(":");
+    Serial.println(buffer[i]);
+  }
+}
+
+static void print_color(Color_t color)
+{
+  Serial.print("\nCOLOR: ");
+  Serial.print("R:");
+  Serial.print(color.R);
+  Serial.print("G:");
+  Serial.print(color.G);
+  Serial.print("B:");
+  Serial.print(color.B); 
+}
+
 static void spi_transfer(uint8_t* buffer, size_t size)
 {
-  for (size_t i = 0; i < size; i++)
+  uint8_t temp_buffer[TLC5955_COMMON_BUFFER_SIZE];
+  for (int i = 0; i < TLC5955_COMMON_BUFFER_SIZE && i < size; i++)
   {
-    SPI.transfer(buffer[i]);
+    temp_buffer[i] = buffer[i];
   }
+  SPI.transfer(temp_buffer, size);
+//  for (size_t i = 0; i < size; i++)
+//  {
+//    SPI.transfer(buffer[i]);
+//  }
 }
 
 static void latch()
@@ -106,7 +135,7 @@ void LEDTLC5955::set_value(uint8_t* buffer, size_t buffer_size, uint32_t bit, ui
 void LEDTLC5955::set_bit(uint8_t* buffer, size_t buffer_size, uint32_t bit, bool set_bit)
 {
 
-   uint32_t index = (TLC5955_COMMON_BUFFER_SIZE - 1) - (bit / 8);
+   uint32_t index = (buffer_size - 1) - (bit / 8);
    uint8_t offset = bit % 8;
    
    if (index >= buffer_size)
@@ -116,10 +145,11 @@ void LEDTLC5955::set_bit(uint8_t* buffer, size_t buffer_size, uint32_t bit, bool
 
    if (set_bit)
    {
-      buffer[index] |= 0xff & (0x01 << offset); 
+      buffer[index] |= 0xff & (0x01 << offset);
+      
    }else
    {
-      buffer[index] &= 0xff & (0xfe << offset);
+      buffer[index] &= 0xff & ~(0x01 << offset);
    }
 
 }
@@ -131,14 +161,9 @@ void LEDTLC5955::SetLed(uint32_t led_index, Color_t color)
       return;
    }
 
-   uint32_t offset = (TLC5955_COMMON_BUFFER_SIZE - 1) - (led_index * 6);
+  m_set_color[led_index] = color;
 
-   m_gs_buffer[offset] = 0xff & (color.R);
-   m_gs_buffer[offset - 1] = 0xff & (color.R >> 8);
-   m_gs_buffer[offset - 2] = 0xff & (color.G);
-   m_gs_buffer[offset - 3] = 0xff & (color.G >> 8);
-   m_gs_buffer[offset - 4] = 0xff & (color.B);
-   m_gs_buffer[offset - 5] = 0xff & (color.B >> 8);
+
 }
 
 void LEDTLC5955::UpdateControlSettings()
@@ -146,20 +171,81 @@ void LEDTLC5955::UpdateControlSettings()
 
 	set_bit(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE, TLC5955_CONTROL_BIT, true);
 	m_control_buffer[1] = TLC5955_CONTROL_BYTE;
+  m_control_buffer[54] &= 0b11111000;
 
+  // Max current register needs to be written twice to take effect. Send controller buffer twice 
+  spi_transfer(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE);
+  latch();
   spi_transfer(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE);
   latch();
 }
 
-void LEDTLC5955::UpdateLED()
+void LEDTLC5955::SendColorBuffer()
 {
      spi_transfer(m_gs_buffer, TLC5955_COMMON_BUFFER_SIZE);
      latch();
 }
 
+void LEDTLC5955::UpdateLED()
+{
+    for (size_t i = 0; i < LED_COUNT; i++)
+    {
+      // NOTE: WILL NEVER SETTLE IF SET AND DESIRED COLOR ARE NOT DEVISIBLE BY STEP VALUE
+      if (m_set_color[i].R > m_actual_color[i].R)
+      {
+          m_actual_color[i].R += m_fade_step;
+      }else if (m_set_color[i].R < m_actual_color[i].R)
+      {
+          m_actual_color[i].R -= m_fade_step;
+      }
+
+      if (m_set_color[i].G > m_actual_color[i].G)
+      {
+          m_actual_color[i].G += m_fade_step;
+      }else if (m_set_color[i].G < m_actual_color[i].G)
+      {
+        m_actual_color[i].G -= m_fade_step;
+      }
+
+       if (m_set_color[i].B > m_actual_color[i].B)
+      {
+          m_actual_color[i].B += m_fade_step;
+      }else if (m_set_color[i].B < m_actual_color[i].B)
+      {
+        m_actual_color[i].B -= m_fade_step;
+      }
+
+      
+     uint32_t offset = (TLC5955_COMMON_BUFFER_SIZE - 1) - (i * 6);
+  
+     m_gs_buffer[offset] = 0xff & (m_actual_color[i].R);
+     m_gs_buffer[offset - 1] = 0xff & (m_actual_color[i].R >> 8);
+     m_gs_buffer[offset - 2] = 0xff & (m_actual_color[i].G);
+     m_gs_buffer[offset - 3] = 0xff & (m_actual_color[i].G >> 8);
+     m_gs_buffer[offset - 4] = 0xff & (m_actual_color[i].B);
+     m_gs_buffer[offset - 5] = 0xff & (m_actual_color[i].B >> 8);
+    }
+
+}
+
 cmd_status_t LEDTLC5955::CommandCallback(uint8_t* buffer, size_t size, uint32_t code)
 {
-  m_gs_buffer[70] = 0xff;
-  Serial.write("Here");
+  size_t MAX_NUM_ARGS = 5;
+  uint32_t args[MAX_NUM_ARGS];
+
+  memset(args, 0, MAX_NUM_ARGS);
+  StringUtilities::SplitToUint(buffer, size, ',', args, MAX_NUM_ARGS);
+  Serial.print("\nCommand: ");
+  Serial.print(args[0]);
+  Serial.print(",");
+  Serial.print(args[1]);
+  Serial.print(",");
+  Serial.print(args[2]);
+  Serial.print(",");
+  Serial.print(args[3]);
+  
+
+  Color_t new_color{args[1], args[2], args[3]};
+  SetLed(args[0], new_color);
   return cmd_status_t::Ok;
 }

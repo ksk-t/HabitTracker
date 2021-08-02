@@ -12,19 +12,18 @@ uint8_t setled[] = "setled";
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+  Serial.begin(115200);
 
   // Configure TLC Driver
-  tlc.SetMaxCurrent(7, 7, 7);
-  tlc.SetGlobalBrightness(4, 40, 127);
+  tlc.SetMaxCurrent(1, 1, 1);
+  tlc.SetGlobalBrightness(10, 10, 10);
   TLC5955_function_t function;
   function.display_timing_reset_enable = true;
   tlc.SetFunction(function);
   tlc.UpdateControlSettings();
   
-  Color_t color{0, 0, 5000};
+  Color_t color{0, 5000, 10000};
   tlc.SetLed(13, color);
-
-  Serial.begin(115200);
 
   // Setup comamands
   cmd_parser.RegisterModule(Module_t::LEDController, &tlc);
@@ -48,6 +47,8 @@ void loop() {
   }
   
   tlc.UpdateLED();
+  tlc.SendColorBuffer();
+  delay(10);
 }
 
  

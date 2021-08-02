@@ -67,15 +67,21 @@ public:
     * Callback for command parser
     */
     cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code);
-    
+
+    void SendColorBuffer();
+
+   void set_value(uint8_t* buffer, size_t buffer_size, uint32_t bit, uint32_t value, uint8_t value_size);
+   void set_bit(uint8_t* buffer, size_t buffer_size, uint32_t index, bool set_bit);
 private:
    const static uint32_t LED_COUNT = 16;
 
    uint8_t m_gs_buffer[TLC5955_COMMON_BUFFER_SIZE];
    uint8_t m_control_buffer[TLC5955_COMMON_BUFFER_SIZE];
+   Color_t m_set_color[LED_COUNT];
+   Color_t m_actual_color[LED_COUNT];
+   uint32_t m_fade_step = 1;
 
-   void set_value(uint8_t* buffer, size_t buffer_size, uint32_t bit, uint32_t value, uint8_t value_size);
-   void set_bit(uint8_t* buffer, size_t buffer_size, uint32_t index, bool set_bit);
+
 };
 
 

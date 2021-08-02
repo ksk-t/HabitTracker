@@ -25,6 +25,11 @@ struct Color_t
 		{
 			return (R == c.R) && (G == c.G) && (B == c.B);
 		}
+
+   bool operator!=(const Color_t &c)
+   {
+    return (R != c.R) || (G != c.G) || (B != c.B);
+   }
 };
 
 struct BasicColors
