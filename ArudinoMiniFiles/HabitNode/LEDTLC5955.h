@@ -23,7 +23,7 @@ struct TLC5955_function_t
 	bool lsd_detection_voltage = false;
 };
 
-class LEDTLC5955 : public CommandCallableBase
+class LEDTLC5955 
 {
 public:
    /* Constructor */
@@ -62,11 +62,6 @@ public:
     * Updates LED
     */
    void UpdateLED();
-
-   /*
-    * Callback for command parser
-    */
-    cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code);
 
     void SendColorBuffer();
 

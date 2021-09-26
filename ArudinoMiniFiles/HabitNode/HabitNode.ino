@@ -1,5 +1,6 @@
 #include "LEDTLC5955.h"
 #include "CommandParser.h"
+#include "LEDControllerCommandHandler.h"
 
 #define INPUT_BUFFER_SIZE 64
 uint8_t input_buffer[INPUT_BUFFER_SIZE];
@@ -22,7 +23,7 @@ void setup() {
   tlc.SetFunction(function);
   tlc.UpdateControlSettings();
   
-  Color_t color{0, 5000, 10000};
+  Color_t color{0, 0, 500};
   tlc.SetLed(13, color);
 
   // Setup comamands
@@ -50,5 +51,3 @@ void loop() {
   tlc.SendColorBuffer();
   delay(10);
 }
-
- 
