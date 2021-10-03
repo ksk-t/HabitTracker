@@ -22,7 +22,7 @@ void setup() {
   TLC5955_function_t function;
   function.display_timing_reset_enable = true;
   tlc.SetFunction(function);
-  tlc.UpdateControlSettings();
+  tlc.ApplyControlSettings();
   
   Color_t color{0, 0, 500};
   tlc.SetLed(13, color);

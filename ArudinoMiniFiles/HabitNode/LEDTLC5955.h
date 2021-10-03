@@ -42,7 +42,7 @@ public:
 
    void SetGlobalBrightness(uint8_t r_gb, uint8_t g_gb, uint8_t b_gb);
 
-   void UpdateControlSettings();
+   void ApplyControlSettings();
    /* 
     * Sets the color of the specified LED. A call to Update() is required
     * for the changes made by this function to take place
@@ -76,7 +76,7 @@ private:
    Color_t m_actual_color[LED_COUNT];
    uint32_t m_fade_step = 1;
 
-
+   void applyStep(uint32_t *set_color, uint32_t *actual_color);
 };
 
 

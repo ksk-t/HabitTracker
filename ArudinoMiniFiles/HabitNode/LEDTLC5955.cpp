@@ -166,7 +166,7 @@ void LEDTLC5955::SetLed(uint32_t led_index, Color_t color)
 
 }
 
-void LEDTLC5955::UpdateControlSettings()
+void LEDTLC5955::ApplyControlSettings()
 {
 
 	set_bit(m_control_buffer, TLC5955_COMMON_BUFFER_SIZE, TLC5955_CONTROL_BIT, true);
@@ -186,36 +186,34 @@ void LEDTLC5955::SendColorBuffer()
      latch();
 }
 
+void LEDTLC5955::applyStep(uint32_t *set_color, uint32_t *actual_color)
+{
+      if (*set_color > *actual_color)
+      {
+          *actual_color += m_fade_step;
+          if (*actual_color > *set_color)
+          {
+             *actual_color = *set_color;
+          }
+      }else if (*set_color < *actual_color)
+      {
+          *actual_color -= m_fade_step;
+          if (*actual_color < *set_color)
+          {
+             *actual_color = *set_color;
+          }
+      }
+}
+
 void LEDTLC5955::UpdateLED()
 {
     for (size_t i = 0; i < LED_COUNT; i++)
     {
       // NOTE: WILL NEVER SETTLE IF SET AND DESIRED COLOR ARE NOT DEVISIBLE BY STEP VALUE
-      if (m_set_color[i].R > m_actual_color[i].R)
-      {
-          m_actual_color[i].R += m_fade_step;
-      }else if (m_set_color[i].R < m_actual_color[i].R)
-      {
-          m_actual_color[i].R -= m_fade_step;
-      }
+      applyStep(&m_set_color[i].R, &m_actual_color[i].R);
+      applyStep(&m_set_color[i].G, &m_actual_color[i].G);
+      applyStep(&m_set_color[i].B, &m_actual_color[i].B);
 
-      if (m_set_color[i].G > m_actual_color[i].G)
-      {
-          m_actual_color[i].G += m_fade_step;
-      }else if (m_set_color[i].G < m_actual_color[i].G)
-      {
-        m_actual_color[i].G -= m_fade_step;
-      }
-
-       if (m_set_color[i].B > m_actual_color[i].B)
-      {
-          m_actual_color[i].B += m_fade_step;
-      }else if (m_set_color[i].B < m_actual_color[i].B)
-      {
-        m_actual_color[i].B -= m_fade_step;
-      }
-
-      
      uint32_t offset = (TLC5955_COMMON_BUFFER_SIZE - 1) - (i * 6);
   
      m_gs_buffer[offset] = 0xff & (m_actual_color[i].R);
@@ -225,6 +223,5 @@ void LEDTLC5955::UpdateLED()
      m_gs_buffer[offset - 4] = 0xff & (m_actual_color[i].B);
      m_gs_buffer[offset - 5] = 0xff & (m_actual_color[i].B >> 8);
     }
-
 }
 
