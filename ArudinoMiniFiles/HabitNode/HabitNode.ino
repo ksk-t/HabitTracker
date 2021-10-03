@@ -6,6 +6,7 @@
 uint8_t input_buffer[INPUT_BUFFER_SIZE];
 
 LEDTLC5955 tlc{};
+LEDControllerCommandHandler tlc_handle{&tlc};
 CommandParser cmd_parser{};
 
 #define CMD_SET_LED 0
@@ -27,7 +28,7 @@ void setup() {
   tlc.SetLed(13, color);
 
   // Setup comamands
-  cmd_parser.RegisterModule(Module_t::LEDController, &tlc);
+  cmd_parser.RegisterModule(Module_t::LEDController, &tlc_handle);
   Command_t cmd;
   cmd.Module = Module_t::LEDController;
   cmd.Name = setled;

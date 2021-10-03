@@ -3,6 +3,12 @@
 #include <string.h>
 #include "Arduino.h"
 
+LEDControllerCommandHandler::LEDControllerCommandHandler(LEDTLC5955* handle) :
+  m_handler(handle) 
+{
+
+}
+
 cmd_status_t LEDControllerCommandHandler::CommandCallback(uint8_t* buffer, size_t size, uint32_t code)
 {
    cmd_status_t status = cmd_status_t::Ok;

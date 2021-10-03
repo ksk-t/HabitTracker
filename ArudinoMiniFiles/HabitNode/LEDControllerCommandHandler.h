@@ -7,7 +7,6 @@
 class LEDControllerCommandHandler : public CommandCallableBase
 {
 public:
-
    LEDControllerCommandHandler(LEDTLC5955 *handler);
 
    cmd_status_t CommandCallback(uint8_t* buffer, size_t size, uint32_t code);
